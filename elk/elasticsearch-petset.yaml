@@ -1,0 +1,86 @@
+# apiVersion: apps/v1beta1
+# kind: StatefulSet
+apiVersion: apps/v1alpha1
+kind: PetSet
+metadata:
+  name: elasticsearch
+  namespace: kube-system
+  labels:
+    app: elk
+    component: elasticsearch
+    role: logging
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: database       # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+
+spec:
+  serviceName: elasticsearch
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: elasticsearch
+        role: logging
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: database       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:2.4
+        imagePullPolicy: IfNotPresent # Always, Never
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: "ES_JAVA_OPTS"
+          value: "-Xmx512m -Xms512m"
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-data
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+        labels:
+          app: elk
+          component: elasticsearch
+          role: logging
+          release: stable      # canary
+          environment: staging # dev, qa, production
+          partition: all       # customer_1, customer_2, developer_1, beta_release
+          type: ebs
+          support: ssd
+          encrypted: "true"
+          persistence: durable
+        annotations:
+          volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+          # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Gi

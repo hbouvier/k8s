@@ -1,0 +1,122 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash
+  namespace: kube-system
+  labels:
+    app: elk
+    component: logstash
+    role: collect-publish-log
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: daemon         # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+data:
+  logstash.conf: |-
+    input {  
+      beats {
+        port => "5043"
+      }
+      beats {
+        port => "5044"
+        codec => json
+      }
+      http {
+        port => 8080
+        type  => http_json_endpoint
+        codec => json
+      }
+      tcp {
+        port => 5000
+        type => syslog
+      }
+      udp {
+        port => 5000
+        type => syslog
+      }
+    }
+
+    filter {
+      if [source] =~ "containers" {
+        mutate {
+          rename => { "log" => "message" }
+        }
+        
+        grok {
+          match => [
+            "source", "^/var/log/containers/(?<pod_name>[^_]+)_(?<namespace>[^_]+)_%{GREEDYDATA:container_name}-(?<container_id>[^\.]+).log"
+          ]
+        }
+        date {
+          match => ["time", "ISO8601"]
+          remove_field => ["time"]
+        }
+
+        mutate {
+          add_field => {
+            "process_name"      => "%{container_name}"
+            "process_source"    => "%{pod_name}"
+          }
+        }
+
+        mutate {
+          rename => [ "container_id",                 "[kubernetes][container_id]" ]
+          rename => [ "container_name",               "[kubernetes][container_name]" ]
+          rename => [ "namespace",                    "[kubernetes][namespace]" ]
+          rename => [ "pod_name",                     "[kubernetes][pod_name]" ]
+          rename => [ "process_name",                 "[process][name]" ]
+          rename => [ "process_source",               "[process][source]" ]
+        }
+      }
+    }
+
+
+    # Dec 29 00:27:41 ip-172-20-56-99 kubelet[849]: I1229 00:27:41.685542     849 operation_executor.go:917] MountVolume.SetUp succeeded for volume
+    # Dec 29 07:55:15 ip-172-20-56-99 kubelet[849]: W1229 07:55:15.862591     849 container_manager_linux.go:662] CPUAccounting not enabled for pid: 849
+    # Dec 29 12:46:08 ip-172-20-56-99 kernel: [62534.247367] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+    # Dec 28 19:24:31 ip-172-20-56-99 kernel: [    0.150570] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=0 pin2=0
+    filter {
+      if !([source] =~ "containers") {
+        grok {
+          match => [ "message",  "(?<process_timestamp>[a-zA-Z]{3}[ ]+\d+ \d+:\d+:\d+) (?<process_host>[^ ]*) (?<process_name>[^\[: ]*)(\[(?<process_id>\d*)\])?[: ][ ]*%{GREEDYDATA:process_message}" ]
+        }
+        date {
+          match => [ 
+            "process_timestamp",
+            "MMM dd HH:mm:ss",
+            "MMM  d HH:mm:ss",
+            "ISO8601"
+          ]
+        }
+
+        if !("_grokparsefailure" in [tags]) {
+          if [process_message] =~ /.+/ {
+            mutate {
+              replace      => [ "message", "%{process_message}" ]
+              remove_field => [ "process_message" ]
+              gsub         => [ "message", "#033\[\d+m", "" ]
+            }
+          }
+        }
+        
+        grok {
+          match => [
+            "source", "%{GREEDYDATA}/%{DATA:process_source}(\.log)?$"
+          ]
+        }
+        mutate {
+          rename => [ "process_id",                   "[process][id]" ]
+          rename => [ "process_name",                 "[process][name]" ]
+          rename => [ "process_host",                 "[process][host]" ]
+          rename => [ "process_source",               "[process][source]" ]
+          rename => [ "process_timestamp",            "[process][timestamp]" ]
+        }
+      }
+    }
+
+    output {
+      elasticsearch { 
+        hosts => ["elasticsearch.kube-system.svc.cluster.local:9200"]
+      }
+    }

@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: kube-system
+  labels:
+    app: elk
+    component: logstash-internal-lb
+    role: load-balancer
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: daemon         # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  selector:
+    app: elk
+    component: logstash
+  ports:
+  - name: syslog-tcp
+    port: 5000
+    protocol: TCP
+    targetPort: 5000
+  - name: syslog
+    port: 5000
+    protocol: UDP
+    targetPort: 5000
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: filebeat-raw
+    port: 5043
+    protocol: TCP
+    targetPort: 5043
+  - name: filebeat-json
+    port: 5044
+    protocol: TCP
+    targetPort: 5044

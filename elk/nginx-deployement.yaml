@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: kube-system
+  labels:
+    app: elk
+    component: nginx
+    role: proxy
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: daemon         # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: nginx
+        role: proxy
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: daemon         # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: nginx
+        imagePullPolicy: Always
+        image: nginx:1.10
+        ports:
+          - name: http
+            containerPort: 80
+        volumeMounts:
+        - name: nginx-default-conf
+          mountPath: /etc/nginx/conf.d
+        - name: nginx-htpasswd
+          mountPath: /etc/nginx/htpasswd.d
+
+      volumes:
+        - name: nginx-default-conf
+          configMap:
+            name: nginx-default-conf
+            items:
+            - key: default.conf
+              path: default.conf
+        - name: nginx-htpasswd
+          secret:
+            secretName: kibana
+            items:
+            - key: htpasswd
+              path: .htpasswd
+              mode: 0644  

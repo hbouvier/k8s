@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: filebeat-log
+  namespace: kube-system
+  labels:
+    app: elk
+    component: filebeat-log
+    role: collect-system-log
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: daemon         # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: filebeat-log
+        role: collect-system-log
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: daemon         # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+      name: filebeat-log
+    spec:
+      containers:
+      - name: filebeat
+        imagePullPolicy: Always
+        image: hbouvier/filebeat:v0.0.0-0001
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: filebeat-config-dir
+          mountPath: /etc/filebeat/
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: filebeat-config-dir
+        configMap:
+          name: filebeat-log
+          items:
+          - key: filebeat.yml
+            path: filebeat.yml
