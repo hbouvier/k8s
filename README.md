@@ -36,6 +36,48 @@ open https://api.subdomain.domain.com/ui
 ```bash
 
 
+## CREATE A NEW ADMIN USER
+
+```bash
+UUID=$(uuidgen)
+echo -n '{"Data":"'${UUID}'"}' > /tmp/__USER_NAME__
+s3cmd put /tmp/__USER_NAME__ s3://__K8S_BUCKET__/subdomain.domain.com/secrets/__USER_NAME__
+
+kubectl config set-credentials __USER_NAME__/subdomain.domain.com --token=${UUID}
+kubectl config set-cluster subdomain.domain.com --insecure-skip-tls-verify=true --server=https://api.subdomain.domain.com
+kubectl config set-context default/subdomain.domain.com/__USER_NAME__ --user=__USER_NAME__/subdomain.domain.com --namespace=default --cluster=subdomain.domain.com
+kubectl config use-context default/subdomain.domain.com/__USER_NAME__
+
+curl -vk -H 'Authorization: Bearer '${UUID} https://api.subdomain.domain.com/api
+
+kubectl get pod --all-namespaces
+```
+
+```bash
+kubectl config view
+    apiVersion: v1
+    clusters:
+    - cluster:
+        insecure-skip-tls-verify: true
+        server: https://subdomain.domain.com
+      name: subdomain.domain.com
+    contexts:
+    - context:
+        cluster: subdomain.domain.com
+        namespace: default
+        user: __USER_NAME__/subdomain.domain.com
+      name: default/subdomain.domain.com/__USER_NAME__
+    current-context: default/subdomain.domain.com/__USER_NAME__
+    kind: Config
+    preferences: {}
+    users:
+    - name: __USER_NAME__/subdomain.domain.com
+      user:
+        token: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+```
+
+
+
 NOTE:
 
 Create an elb for TCP 22 on the master instance

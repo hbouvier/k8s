@@ -1,0 +1,16 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: jenkins-master-pvc
+  namespace: ci
+  annotations:
+    volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+  labels:
+    type: aws-ebs-encrypted-ssd
+    persistence: durable
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi

@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: ci
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ci
+        component: jenkins
+        role: master
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: ci             # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: master
+        image: jenkins:2.7.2
+        ports:
+        - containerPort: 8080
+        - containerPort: 50000
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 2
+          failureThreshold: 5
+        env:
+        - name: JENKINS_OPTS
+          valueFrom:
+            secretKeyRef:
+              name: jenkins
+              key: arguments
+        volumeMounts:
+        - mountPath: /var/jenkins_home
+          name: jenkins-home
+        - mountPath: /var/run/docker.sock
+          name: docker-socket
+          readOnly: false
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1500Mi
+          requests:
+            cpu: 500m
+            memory: 1500Mi
+      volumes:
+      - name: jenkins-home
+        persistentVolumeClaim:
+          claimName: jenkins-master-pvc
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
