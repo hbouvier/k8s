@@ -5,12 +5,13 @@ const { proxy } = require('mirv');
 exports.cluster = function(config, state) {
   const auth = proxy.basic_auth(config.couchdb.username, config.couchdb.password);
 
-  function _is_couchdb_up(host, auth) {
-    return proxy.get(`http://${host}:5984/_up`, auth, config.debug);
-  }
 
   function wait_for_couchdb_to_be_up(host) {
     const delay = 1000;
+
+    function _is_couchdb_up(host, auth) {
+      return proxy.get(`http://${host}:5984/_up`, auth, config.debug);
+    }
 
     return new Promise( (resolve, reject) => {
       function _wait_for_couchdb_to_be_up() {
@@ -32,24 +33,6 @@ exports.cluster = function(config, state) {
     });
   }
 
-  function is_couchdb_cluster_enabled(host, auth) {
-    return proxy.get(`http://${host}:5984/_all_dbs`, auth, config.debug)
-              .then(body => {
-                return json(body);
-              })
-              .then(list_of_databases => {
-                if (list_of_databases.length > 0) {
-                  return `${host} - [ok] couchdb clustering configured ==> ${JSON.stringify(list_of_databases)}`;
-                }
-                throw new Error(`${host} [KO] couchdb clustering configured ==> ${JSON.stringify(list_of_databases)}`);
-                //return Promise.reject(new Error(`${host} [KO] couchdb clustering configured ==> ${JSON.stringify(list_of_databases)}`));
-              })
-              .catch(err => {
-                throw new Error(`${host} [KO] couchdb clustering configured ==> ${err.message}`);
-                //return Promise.reject(new Error(`${host} [KO] couchdb clustering configured ==> ${err.message}`));
-              });
-  }
-
   function create_admin_user(host, cluster_name) {
     return proxy.put(
       `http://${host}:5984/_node/${cluster_name}@${host}/_config/admins/${config.couchdb.username}`,
@@ -63,7 +46,6 @@ exports.cluster = function(config, state) {
     })
     .catch(err => {
       throw new Error(`${host} [KO] create the 'admin' user ==> ${err.message}`);
-      //return Promise.reject(new Error(`${host} [KO] create the 'admin' user ==> ${err.message}`));
     });
   }
 
@@ -80,12 +62,10 @@ exports.cluster = function(config, state) {
     .then(body => json(body))
     .then(res => {
       if (res !== 'any') throw new Error(`${host} - [KO] http server listen to 0.0.0.0 ==> ${JSON.stringify(res)}`);
-      // if (res !== 'any') return Promise.reject(new Error(`${host} - [KO] http server listen to 0.0.0.0 ==> ${res}`));
       return `${host} - [ok] http server listen to 0.0.0.0 ==> ${JSON.stringify(res)}`;
     })
     .catch(err => { 
       throw new Error(`${host} - [KO] http server listen to 0.0.0.0 ==> ${err.message}`);
-      //return Promise.reject(new Error(`${host} - [KO] http server listen to 0.0.0.0 ==> ${err.message}`));
     });
   }
 
@@ -111,7 +91,6 @@ exports.cluster = function(config, state) {
     })
     .catch(err => { 
       throw new Error(`${host} - [KO] enable couchdb clustering ==> ${err.message}`);
-      //return Promise.reject(new Error(`${host} - [KO] enable couchdb clustering ==> ${err.message}`));
     });
   }
 
@@ -135,7 +114,6 @@ exports.cluster = function(config, state) {
         throw new Error(`${host} - [KO] cluster configured  ==> ${JSON.stringify(ex.message)}`);
       }
       throw new Error(`${host} - [KO] cluster configured  ==> ${JSON.stringify(err.message)}`);
-      //return Promise.reject(new Error(`${host} - [KO] cluster configured  ==> ${JSON.stringify(err.message)}`));
     });
   }
 
@@ -156,9 +134,7 @@ exports.cluster = function(config, state) {
         }
       } catch (ex) {
         throw ex;
-        //return Promise.reject(ex);
       }
-      //return Promise.reject(new Error(`${host} - [KO] add seed host ==> ${err.message}`));
       throw new Error(`${seed_host} - [KO] add ${seed_host} as seed host ==> ${err.message}`);
     });
   }
@@ -175,14 +151,12 @@ exports.cluster = function(config, state) {
     })
     .catch(err => {
       throw new Error(`${host} - [KO] cluster members  ==> ${JSON.stringify(err.message)}`);
-      //return Promise.reject(new Error(`${host} - [KO] cluster members ==> ${JSON.stringify(err.message)}`));
     });
   }
 
 
   return {
     wait_for_couchdb_to_be_up:  wait_for_couchdb_to_be_up,
-    is_couchdb_cluster_enabled: is_couchdb_cluster_enabled,
     create_admin_user:          create_admin_user,
     enable_http:                enable_http,
     enable_cluster:             enable_cluster,

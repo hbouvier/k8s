@@ -54,27 +54,6 @@ exports.setup = function (config, state) {
     .then(progress)
     .then(msg => couchdb.list_members(couchdb_node))
     .then(progress)
-
-    /*
-    .then(msg => {
-      return couchdb.is_couchdb_cluster_enabled(couchdb_node, {})  // no auth
-        .then(progress)
-        .catch(msg => couchdb.is_couchdb_cluster_enabled(couchdb_node)) // with auth
-        .then(progress)
-        .catch(err => {
-          console.log('=============== Joining CouchDB Cluster ===============')
-          return enable_cluster(cluster_name, seed_node, couchdb_node)
-        })
-        .then(msg => {
-          if (seed_node == couchdb_node) return msg;
-          return couchdb.add_seed_host(seed_node, cluster_name)
-            .then(process)
-        })
-        .then(progress)
-        .then(msg => couchdb.list_members(couchdb_node))
-        .then(progress)
-    });
-    */
   }
 
   function progress(msg) {
