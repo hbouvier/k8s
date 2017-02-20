@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "basic-auth-connect": "^1.0.0",
-    "mirv": "^0.0.6"
+    "mirv": "^0.0.7"
   },
   "engines": {
     "node": "7.2.x"

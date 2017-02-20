@@ -14,8 +14,8 @@ RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh
 
 COPY ./bootstrap /app/bootstrap
 WORKDIR /app/bootstrap
-# RUN . /root/.bashrc && \
-#     npm install
+RUN . /root/.bashrc && \
+    npm install
 
 CMD . /root/.bashrc && \
     node ./bootstrap
