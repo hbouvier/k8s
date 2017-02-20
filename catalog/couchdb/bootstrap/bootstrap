@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+'use strict';
+
+const mirv   = require('mirv'),
+      routes = require('./routes'),
+      exec   = require('child_process').exec;
+
+// We require nodeJS v7.2 as a minimum requirement for ES6.
+//
+mirv.semver.engine_satisfies('7.2');
+
+
+const do_not_log_routes = process.env['NODE_ENV'] == 'production' ? ['/healthz'] : [];
+const config = Object.assign({},
+                {
+                  nb_workers: 1,
+                  debug: process.env['DEBUG']
+                },
+                process.env['COUCHDB_USER'] && process.env['COUCHDB_PASSWORD'] ?
+                  {
+                    couchdb : {
+                      username: process.env['COUCHDB_USER'],
+                      password: process.env['COUCHDB_PASSWORD']
+                    }
+                  } : { couchdb : {} },
+                process.env['BOOTSTRAP_USERNAME'] && process.env['BOOTSTRAP_PASSWORD'] ?
+                  {
+                    username: process.env['BOOTSTRAP_USERNAME'],
+                    password: process.env['BOOTSTRAP_PASSWORD']
+                  } : {}
+               );
+
+mirv.supervisor(
+  mirv.rest(routes, do_not_log_routes),
+  config
+);
+
+
+
+const { proxy } = require('mirv');
+const { cluster } = require('./api/setup').setup(config, config.state);
+
+function execute(command) {
+  return new Promise( (resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+      return resolve(stdout);
+    });
+  });
+}
+
+if (require('cluster').isMaster) {
+  let mutable_hostname = 'unknown';
+  execute('hostname -f')
+    .then(hostname => mutable_hostname = hostname.trim())
+    .then(cluster)
+    .then(msg => {
+      return proxy.put('http://127.0.0.1:3000/healthz/true')
+                .then(body => `${mutable_hostname} - [OK]`)
+    })
+    .catch(err => {
+      try {
+        console.log(`${mutable_hostname} *************************************************`);
+        console.log(`${mutable_hostname} DID NOT JOIN THE CLUSTER`);
+        console.log(`${mutable_hostname} MANUAL INTERVENTION REQUIRED!!!`);
+        console.log(`${mutable_hostname} REASON:`);
+        console.log(`${mutable_hostname} \t${err.message}`);
+        console.log(`${mutable_hostname} *************************************************`);
+      } catch (ex) {
+        console.log('Kaboum!', ex);
+      }
+    });
+}
+

@@ -1,0 +1,15 @@
+# Ensures individual Pets get their own DNS entries
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: couchdb
+  name: couchdb
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - name: data
+    port: 5984
+  selector:
+    app: couchdb

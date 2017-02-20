@@ -1,0 +1,142 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: couchdb
+  # these labels can be applied automatically
+  # from the labels in the pod template if not set
+  # labels:
+  #   app: botvm
+  #   component: couchdb
+  #   role: event-store
+  #   release: stable      # canary
+  #   environment: staging # dev, qa, production
+  #   tier: database       # frontend, backend, cache
+  #   partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  serviceName: couchdb
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+      labels:
+        app: couchdb
+        component: couchdb
+        role: store
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: database       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: couchdb
+        image: klaemo/couchdb:2.0.0
+        imagePullPolicy: Always
+        env:
+        - name: ERL_FLAGS
+          valueFrom:
+            configMapKeyRef:
+              name: couchdb
+              key: erlflags
+        ports:
+        - containerPort: 5984
+          name: data
+        - containerPort: 4369
+          name: epmd
+        - containerPort: 9100
+          name: erlang-dist
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 2
+            memory: 1Gi
+        readinessProbe:
+          httpGet:
+            path: /_up
+            port: 5984
+          initialDelaySeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /_up
+            port: 5984
+          initialDelaySeconds: 15
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5
+        volumeMounts:
+        - mountPath: /opt/couchdb/data
+          name: couchdb-data
+        - mountPath: /opt/couchdb/etc/default.d
+          name:  defaultd
+      - name: couchdb-k8s-bootstrap
+        image: hbouvier/couchdb-k8s-bootstrap
+        imagePullPolicy: Always # IfNotPresent, Always, Never
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: DEBUG
+          value: "true"
+        - name: COUCHDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cluster-admin
+              key: username
+        - name: COUCHDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cluster-admin
+              key: password
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+          initialDelaySeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+          initialDelaySeconds: 15
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #       - /bin/bash
+        #       - -c
+        #       - ./join_cluster.py _users
+        #   initialDelaySeconds: 15
+        #   timeoutSeconds: 5
+      volumes:
+      - name: defaultd
+        configMap:
+          name: couchdb
+          items:
+            - key: kubernetes.ini
+              path: kubernetes.ini
+      - name: couchdb-data
+        persistentVolumeClaim:
+          claimName: couchdb-data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: couchdb-data
+      annotations:
+        volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+        # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 32Gi

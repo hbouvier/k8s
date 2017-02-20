@@ -1,2 +1,7 @@
 secrets/*.yaml
 secrets/*.yml
+JOURNAL.md
+/catalog/couchdb/bootstrap/node_modules/
+/catalog/couchdb/bootstrap/coverage/
+catalog/couchdb/bootstrap/npm-debug.log
+catalog/couchdb/npm-debug.log

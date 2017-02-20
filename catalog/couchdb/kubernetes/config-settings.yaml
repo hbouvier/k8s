@@ -1,0 +1,22 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: couchdb
+data:
+  # Erlang VM settings. The -name flag activates the Erlang distribution; there
+  # should be no reason to change this setting. The -setcookie flag is used to
+  # control the Erlang magic cookie. CouchDB cluster nodes can only establish a
+  # connection with one another if they share the same magic cookie.
+  erlflags: >
+    -name couchdb
+    -setcookie macadamia
+  # CouchDB server setttings. The UUID is employed in replication checkpoints
+  # and should be for unique for each cluster, but shared by all members of a
+  # cluster.
+  kubernetes.ini: |
+    [couchdb]
+    uuid = couchdb-prod
+    # [admins]
+    # admin = 27388FE5-52C2-481E-A80E-2A13D68761DB
+    [couch_httpd_auth]
+    require_valid_user = true

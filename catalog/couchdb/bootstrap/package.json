@@ -1,0 +1,27 @@
+{
+  "name": "couchdb-k8s-bootstrap",
+  "version": "0.0.1",
+  "description": "Bootstrap a Couchdb cluster",
+  "main": "./bootstrap",
+  "bin": {
+    "bootstrap": "./bootstrap"
+  },
+  "scripts": {
+    "start": "NODE_ENV=dev ./bootstrap | bunyan",
+    "prod": "NODE_ENV=production ./bootstrap | bunyan",
+    "test": "NODE_ENV=test istanbul cover -x 'spec/*/*.spec.js' jasmine spec/*/*.spec.js && open coverage/lcov-report/index.html",
+    "clean": "rm -r ./coverage"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "jasmine": "^2.5.3",
+    "supertest": "^3.0.0"
+  },
+  "dependencies": {
+    "basic-auth-connect": "^1.0.0",
+    "mirv": "^0.0.6"
+  },
+  "engines": {
+    "node": "7.2.x"
+  }
+}
