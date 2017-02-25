@@ -1,0 +1,82 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: es-client
+  labels:
+    component: elasticsearch
+    role: client
+spec:
+  serviceName: es-client
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+        role: client
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
+    spec:
+      containers:
+      - name: es-client
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - IPC_LOCK
+        image: hbouvier/docker-elasticsearch-kubernetes:5.2.0
+        imagePullPolicy: Always
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: "CLUSTER_NAME"
+          value: "myesdb"
+        - name: NODE_MASTER
+          value: "false"
+        - name: NODE_DATA
+          value: "false"
+        - name: HTTP_ENABLE
+          value: "true"
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms256m -Xmx256m"
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+  #       volumeMounts:
+  #       - name: storage
+  #         mountPath: /data
+  #     # volumes:
+  #     #     - emptyDir:
+  #     #         medium: ""
+  #     #       name: "storage"
+  #     volumes:
+  #     - name: storage
+  #       persistentVolumeClaim:
+  #         claimName: storage
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: storage
+  #     annotations:
+  #       volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+  #       # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     resources:
+  #       requests:
+  #         storage: 48Gi
