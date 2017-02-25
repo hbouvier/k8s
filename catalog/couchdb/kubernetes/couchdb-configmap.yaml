@@ -2,6 +2,14 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: couchdb
+  labels:
+    app: couchdb
+    component: couchdb
+    role: member
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: database       # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
 data:
   # Erlang VM settings. The -name flag activates the Erlang distribution; there
   # should be no reason to change this setting. The -setcookie flag is used to
@@ -17,6 +25,6 @@ data:
     [couchdb]
     uuid = couchdb-prod
     # [admins]
-    # admin = 27388FE5-52C2-481E-A80E-2A13D68761DB
+    # admin = change-me
     [couch_httpd_auth]
     require_valid_user = true

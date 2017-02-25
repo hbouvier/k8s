@@ -32,7 +32,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: couchdb
-        image: klaemo/couchdb:2.0.0
+        image: hbouvier/couchdb:2.0.0
         imagePullPolicy: Always
         env:
         - name: ERL_FLAGS
@@ -72,11 +72,11 @@ spec:
           failureThreshold: 5
         volumeMounts:
         - mountPath: /opt/couchdb/data
-          name: couchdb-data
+          name: data
         - mountPath: /opt/couchdb/etc/default.d
           name:  defaultd
       - name: couchdb-k8s-bootstrap
-        image: hbouvier/couchdb-k8s-bootstrap
+        image: hbouvier/couchdb-bootstrap-kubernetes:2.0.0
         imagePullPolicy: Always # IfNotPresent, Always, Never
         env:
         - name: NODE_ENV
@@ -116,13 +116,13 @@ spec:
           items:
             - key: kubernetes.ini
               path: kubernetes.ini
-      - name: couchdb-data
+      - name: data
         persistentVolumeClaim:
-          claimName: couchdb-data
+          claimName: data
 
   volumeClaimTemplates:
   - metadata:
-      name: couchdb-data
+      name: data
       annotations:
         volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
         # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
