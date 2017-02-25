@@ -25,11 +25,11 @@ exports.cluster = function(config, state) {
             return setTimeout(_wait_for_couchdb_to_be_up, delay);
           })
           .catch(err => {
-            /* DEBUG */ console.log(`${host} - [  ] couchdb ==> ${err.message}`);
+            /* DEBUG */ console.log(`${host} - [  ] couchdb === ${err.message}`);
             return setTimeout(_wait_for_couchdb_to_be_up, delay);
           });
       }
-      return _wait_for_couchdb_to_be_up();
+      _wait_for_couchdb_to_be_up();
     });
   }
 
@@ -154,15 +154,67 @@ exports.cluster = function(config, state) {
     });
   }
 
+  function verify_cluster_configuration(cluster_name, seed_node, host) {
+    return proxy.get(
+        `http://${host}:5984/_membership`,
+        auth,
+        config.debug
+      )
+      .then(body => json(body))
+      .then(members => {
+        console.log(`${host} - [ok] ${host} server administrator configured.`);
+        if (members.all_nodes.indexOf(`${cluster_name}@${host}`) < 0) throw new Error(`${host} - [KO] ${host} has been discovered.`);
+        if (members.all_nodes.indexOf(`${cluster_name}@${seed_node}`) < 0) console.log(`${host} - [WARNING] ${seed_node} has NOT been discovered YET.`);
+        if (members.cluster_nodes.indexOf(`${cluster_name}@${host}`) < 0) throw new Error(`${host} - [KO] ${host} is part of the cluster.`);
+        if (members.cluster_nodes.indexOf(`${cluster_name}@${seed_node}`) < 0) throw new Error(`${host} - [KO] ${seed_node} is part of the cluster.`);
+        return seed_node === host ? 
+          `${host} - [ok] ${host} has been discovered and is part of the cluster` :
+          `${host} - [ok] ${host} and ${seed_node} hve been discovered and are part of the cluster`;
+      })
+      .then(progress)
+      .then(msg => {
+        return proxy.get(
+          `http://${host}:5984/_node/${cluster_name}@${host}/_config/chttpd/bind_address`,
+          auth,
+          config.debug
+        )
+        .then(value => {
+          if (value.replace(/\n/, '') === '"0.0.0.0"') return `${host} - [OK] http enaled`;
+          throw new Error(`${host} - [KO] http enaled`);
+        });
+      })
+      .then(progress)
+      .then(msg => {
+        return proxy.get(
+          `http://${host}:5984/_cluster_setup`,
+          auth,
+          config.debug
+        )
+        .then(progress)
+        .then(body => json(body))
+        .then(response => {
+          if (response.state === 'cluster_finished') return `${host} - [OK] cluster finished`;
+          throw new Error(`${host} - [KO] cluster finished`);
+        })
+        .then(msg => `${host} - [OK] CLUSTER VERIFIED and READY!`);
+      });
+  }
+
+  function progress(msg) {
+    console.log(msg);
+    return msg;
+  }
+
 
   return {
-    wait_for_couchdb_to_be_up:  wait_for_couchdb_to_be_up,
-    create_admin_user:          create_admin_user,
-    enable_http:                enable_http,
-    enable_cluster:             enable_cluster,
-    cluster_configed:           cluster_configed,
-    add_seed_host:              add_seed_host,
-    list_members:               list_members
+    wait_for_couchdb_to_be_up:    wait_for_couchdb_to_be_up,
+    create_admin_user:            create_admin_user,
+    enable_http:                  enable_http,
+    enable_cluster:               enable_cluster,
+    cluster_configed:             cluster_configed,
+    add_seed_host:                add_seed_host,
+    list_members:                 list_members,
+    verify_cluster_configuration: verify_cluster_configuration
   };
 }
 

@@ -44,16 +44,23 @@ exports.setup = function (config, state) {
     const seed_node = `${cluster_name}-0.${domain}`;
 
     return couchdb.wait_for_couchdb_to_be_up(couchdb_node)
-    .then(progress)
-    .then(msg => enable_cluster(cluster_name, seed_node, couchdb_node))
-    .then(msg => {
-      if (seed_node == couchdb_node) return msg;
-      return couchdb.add_seed_host(seed_node, cluster_name)
-        .then(process)
-    })
-    .then(progress)
-    .then(msg => couchdb.list_members(couchdb_node))
-    .then(progress)
+      .then(progress)
+      .then(msg => couchdb.verify_cluster_configuration(cluster_name, seed_node, couchdb_node))
+      .catch(err => {
+        console.log(`${err.message}`);
+        console.log(`${couchdb_node} [  ] Bootstraping cluster node...`);
+        return enable_cluster(cluster_name, seed_node, couchdb_node)
+          .then(msg => {
+            if (seed_node == couchdb_node) return msg;
+            return couchdb.add_seed_host(seed_node, cluster_name)
+              .then(process)
+          })
+          .then(progress)
+          .then(msg => couchdb.list_members(couchdb_node))
+          .then(progress)
+          .then(msg => couchdb.verify_cluster_configuration(cluster_name, seed_node, couchdb_node))
+      })
+      .then(progress);
   }
 
   function progress(msg) {

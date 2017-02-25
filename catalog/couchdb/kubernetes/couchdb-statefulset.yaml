@@ -81,17 +81,17 @@ spec:
         env:
         - name: NODE_ENV
           value: production
-        - name: DEBUG
-          value: "true"
+        # - name: DEBUG
+        #   value: "true"
         - name: COUCHDB_USER
           valueFrom:
             secretKeyRef:
-              name: cluster-admin
+              name: couchdb-cluster-admin
               key: username
         - name: COUCHDB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: cluster-admin
+              name: couchdb-cluster-admin
               key: password
         readinessProbe:
           httpGet:
@@ -109,14 +109,6 @@ spec:
           timeoutSeconds: 3
           successThreshold: 1
           failureThreshold: 5
-        # readinessProbe:
-        #   exec:
-        #     command:
-        #       - /bin/bash
-        #       - -c
-        #       - ./join_cluster.py _users
-        #   initialDelaySeconds: 15
-        #   timeoutSeconds: 5
       volumes:
       - name: defaultd
         configMap:

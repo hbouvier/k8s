@@ -9,7 +9,7 @@ data:
   # connection with one another if they share the same magic cookie.
   erlflags: >
     -name couchdb
-    -setcookie macadamia
+    -setcookie F2D6862C-8236-4DF9-B013-9FEDAA017972
   # CouchDB server setttings. The UUID is employed in replication checkpoints
   # and should be for unique for each cluster, but shared by all members of a
   # cluster.

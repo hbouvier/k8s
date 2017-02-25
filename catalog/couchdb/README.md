@@ -1,6 +1,8 @@
 # CouchDB
 
 
+
+
 To open the UI directly from the k8s private network
 
 ```bash

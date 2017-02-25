@@ -1,6 +1,5 @@
 /* eslint no-console: 0 */
 'use strict';
 module.exports = [
-  require('./healthz').routes,
-  require('./cluster').routes
+  require('./healthz').routes
 ];
