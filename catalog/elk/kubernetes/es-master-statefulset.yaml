@@ -2,17 +2,19 @@ apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: es-master
-  labels:
-    component: elasticsearch
-    role: master
 spec:
   serviceName: es-master
   replicas: 3
   template:
     metadata:
       labels:
+        app: elk
         component: elasticsearch
         role: master
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: database       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
       annotations:
         pod.beta.kubernetes.io/init-containers: '[
           {
@@ -33,7 +35,7 @@ spec:
           capabilities:
             add:
               - IPC_LOCK
-        image: hbouvier/docker-elasticsearch-kubernetes:5.2.0
+        image: hbouvier/elasticsearch-kubernetes:5.2.0
         imagePullPolicy: Always
         env:
         - name: NAMESPACE

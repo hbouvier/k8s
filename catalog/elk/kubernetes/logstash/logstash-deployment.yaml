@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: logstash
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: logstash
+        role: collect-publish-log
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: daemon         # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: logstash
+        imagePullPolicy: Always
+        image: hbouvier/logstash-kubernetes:2.3
+        ports:
+          - name: syslog
+            containerPort: 5000
+            protocol: UDP
+          - name: syslog-tcp
+            containerPort: 5000
+            protocol: TCP
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          - name: filebeat-raw
+            containerPort: 5043
+            protocol: TCP
+          - name: filebeat-json
+            containerPort: 5044
+            protocol: TCP
+        volumeMounts:
+        - name: config-dir
+          mountPath: /config-dir
+      volumes:
+        - name: config-dir
+          configMap:
+            name: logstash
+            items:
+            - key: logstash.conf
+              path: logstash.conf

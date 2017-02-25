@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-log
+  labels:
+    app: elk
+    component: filebeat-container
+    role: collect-container-log
+    release: stable      # canary
+    environment: staging # dev, qa, production
+    tier: daemon         # frontend, backend, cache
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+data:
+  filebeat.yml: |-
+    filebeat:  
+      prospectors:
+        -
+          paths:
+            - "/var/log/daemon.log"
+            - "/var/log/syslog"
+            - "/var/log/messages"
+            - "/var/log/auth.log"
+            - "/var/log/kern.log"
+            - "/var/log/kube-proxy.log"
+            - "/var/log/cloud-init.log"
+            - "/var/log/cloud-init-output.log"
+            - "/var/log/dpkg.log"
+            - "/var/log/alternatives.log"
+            - "/var/log/unattended-upgrades/unattended-upgrades.log"
+            - "/var/log/unattended-upgrades/unattended-upgrades-dpkg.log"
+            - "/var/log/user.log"
+            - "/var/log/debug"
+            - "/var/log/boot"
+            - "/var/log/dmesg"
+          input_type: log
+          document_type: logs
+    output:
+      logstash:
+        hosts: ["logstash.default.svc.cluster.local:5043"]

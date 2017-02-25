@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: kibana
+        role: ui
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: frontend       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: kibana
+        imagePullPolicy: IfNotPresent # Always, Never
+        image: kibana:5.2
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+        env:
+          - name: ELASTICSEARCH_URL
+            value: "http://elasticsearch.default.svc.cluster.local:9200"
+        ports:
+          - name: http
+            containerPort: 5601
