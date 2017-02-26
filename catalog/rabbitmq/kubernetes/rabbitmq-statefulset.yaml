@@ -1,0 +1,92 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  # these labels can be applied automatically
+  # from the labels in the pod template if not set
+  # labels:
+  #   app: botvm
+  #   component: couchdb
+  #   role: event-store
+  #   release: stable      # canary
+  #   environment: staging # dev, qa, production
+  #   tier: database       # frontend, backend, cache
+  #   partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  serviceName: rabbitmq
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+      labels:
+        app: rabbitmq
+        component: rabbitmq
+        role: message-bus
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: message-bus    # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: rabbitmq
+        image: hbouvier/rabbitmq-kubernetes:3.6.6-management
+        imagePullPolicy: Always
+        # command: ["docker-entrypoint.sh"]
+        # args: ["rabbitmq-server"]
+        env:
+        # - name: RABBITMQ_USE_LONGNAME
+        #   value: "true"
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: username
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: password
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: cookie
+        ports:
+        - containerPort: 5672
+          name: data
+        - containerPort: 4369
+          name: epmd
+        - containerPort: 15672
+          name: web
+        - containerPort: 25672
+          name: discovery
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 2
+            memory: 1Gi
+  #       volumeMounts:
+  #       - mountPath: /var/lib/rabbitmq
+  #         name: data
+  #     volumes:
+  #     - name: data
+  #       persistentVolumeClaim:
+  #         claimName: data
+
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: data
+  #     annotations:
+  #       volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+  #       # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     resources:
+  #       requests:
+  #         storage: 16Gi
