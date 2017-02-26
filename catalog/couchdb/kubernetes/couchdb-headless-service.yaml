@@ -11,7 +11,6 @@ metadata:
     tier: database       # frontend, backend, cache
     partition: all       # customer_1, customer_2, developer_1, beta_release
   name: couchdb
-  namespace: default
 spec:
   clusterIP: None
   ports:
