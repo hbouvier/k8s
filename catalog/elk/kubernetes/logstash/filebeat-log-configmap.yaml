@@ -37,4 +37,4 @@ data:
           document_type: logs
     output:
       logstash:
-        hosts: ["logstash.default.svc.cluster.local:5043"]
+        hosts: ["logstash:5043"]

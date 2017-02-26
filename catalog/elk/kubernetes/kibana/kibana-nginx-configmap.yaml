@@ -5,7 +5,7 @@ metadata:
 data:
   default.conf: |-
     upstream proxy-service {
-      server kibana-internal-lb.default.svc.cluster.local:5601;
+      server kibana-internal-lb:5601;
       keepalive 128;
     }
 

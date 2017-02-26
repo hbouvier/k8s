@@ -22,4 +22,4 @@ data:
           document_type: kube_logs
     output:  
       logstash:
-        hosts: ["logstash.default.svc.cluster.local:5044"]
+        hosts: ["logstash:5044"]
