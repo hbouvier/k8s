@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cerebro
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: cerebro
+        role: ui
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: frontend       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: cerebro
+        imagePullPolicy: Always # IfNotPresent, Always, Never
+        image: yannart/cerebro:latest
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+        ports:
+          - name: http
+            containerPort: 9000
+        volumeMounts:
+        - mountPath: /opt/cerebro/conf
+          name: cerebro-conf
+      volumes:
+      - name: cerebro-conf
+        configMap:
+          name: cerebro
+          items:
+            - key: application.conf
+              path: application.conf
