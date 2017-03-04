@@ -1,0 +1,53 @@
+#!/bin/sh
+
+CLUSTER_NAME=${1}
+USER_NAME=${2:-${USER}}
+NAMESPACE=${3:-default}
+
+if [ "$1" == "" ]; then
+  echo "USAGE: cluster_name username {namespace}"
+  exit 2
+fi
+
+kubectl get sa ${USER_NAME} -o json >>/dev/null 2>&1 || kubectl create sa ${USER_NAME}
+
+secret=$(kubectl get sa ${USER_NAME} -o json | jq -r .secrets[].name)
+kubectl get secret ${secret} -o json | jq -r '.data["ca.crt"]' | base64 -D > /tmp/${USER_NAME}-${CLUSTER_NAME}-ca.crt
+user_token=$(kubectl get secret ${secret} -o json | jq -r '.data["token"]' | base64 -D)
+
+# get current context
+context=$(kubectl config current-context)
+
+# get cluster name of context
+context_name=$(kubectl config get-contexts ${context} | awk '{print $3}' | tail -n 1)
+
+# get endpoint of current context 
+endpoint=$(kubectl config view -o jsonpath='{.clusters[?(@.name == "'${context_name}'")].cluster.server}')
+
+
+
+
+###   Create the script
+
+SCRIPT_NAME=/tmp/create-user-${USER_NAME}.sh
+echo "#!/bin/sh" > ${SCRIPT_NAME}
+
+echo "cat > /tmp/${USER_NAME}-${CLUSTER_NAME}-ca.crt <<EOL " >> ${SCRIPT_NAME}
+cat /tmp/${USER_NAME}-${CLUSTER_NAME}-ca.crt >> ${SCRIPT_NAME}
+echo "" >> ${SCRIPT_NAME}
+echo "EOL" >> ${SCRIPT_NAME}
+
+echo "kubectl config set-cluster ${CLUSTER_NAME} --embed-certs=true --server=${endpoint} --certificate-authority=/tmp/${USER_NAME}-${CLUSTER_NAME}-ca.crt" >> ${SCRIPT_NAME}
+
+# echo "kubectl config set-cluster ${CLUSTER_NAME} --server=${endpoint} --insecure-skip-tls-verify=true" >> ${SCRIPT_NAME}
+
+echo "kubectl config set-credentials ${USER_NAME}-${CLUSTER_NAME} --token=${user_token}" >> ${SCRIPT_NAME}
+ 
+echo "kubectl config set-context ${USER_NAME}-${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${USER_NAME}-${CLUSTER_NAME} --namespace=${NAMESPACE}" >> ${SCRIPT_NAME}
+
+echo "kubectl config use-context ${USER_NAME}-${CLUSTER_NAME}" >> ${SCRIPT_NAME}
+
+chmod a+x ${SCRIPT_NAME}
+
+echo "Script ${SCRIPT_NAME} created"
+cat  ${SCRIPT_NAME}
