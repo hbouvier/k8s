@@ -4,6 +4,7 @@ metadata:
   name: kibana
 spec:
   replicas: 1
+  revisionHistoryLimit: 2
   template:
     metadata:
       labels:
@@ -31,3 +32,47 @@ spec:
         ports:
           - name: http
             containerPort: 5601
+      - name: oauth2-proxy
+        image: a5huynh/oauth2_proxy # https://github.com/bitly/oauth2_proxy
+        args:
+          - "-upstream=http://localhost:5601/"
+          - "-http-address=0.0.0.0:4180"
+          - "-config=/etc/oauth2_proxy/config/oauth2_proxy.cfg"
+        env:
+          - name: OAUTH2_PROXY_COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: kibana-oauth-google
+                key: cookie-secret
+          - name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: kibana-oauth-google
+                key: client-id
+          - name: OAUTH2_PROXY_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: kibana-oauth-google
+                key: client-secret
+        ports:
+          - name: http
+            containerPort: 4180
+        volumeMounts:
+        - mountPath: /etc/oauth2_proxy/config
+          name: oauth2-proxy
+        - mountPath: /etc/oauth2_proxy/passwords
+          name: htpasswd
+      volumes:
+      - name: oauth2-proxy
+        configMap:
+          name: kibana
+          items:
+            - key: oauth2_proxy.cfg
+              path: oauth2_proxy.cfg
+      - name: htpasswd
+        secret:
+          secretName: kibana-oauth-google
+          items:
+          - key: htpasswd
+            path: .htpasswd
+            mode: 0644  

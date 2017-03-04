@@ -4,7 +4,7 @@ metadata:
   name: kibana
   labels:
     app: elk
-    component: nginx-lb
+    component: oauth-proxy
     role: load-balancer
     release: stable      # canary
     environment: staging # dev, qa, production
@@ -17,11 +17,11 @@ metadata:
 spec:
   selector:
     app: elk
-    component: nginx
+    component: kibana
   ports:
   - port: 80          # use   443     if you use an SSL Cert managed by AWS
     name: http        # use   https   if you use an SSL Cert managed by AWS
     protocol: TCP
-    targetPort: 80
+    targetPort: 4180
   sessionAffinity: None
   type: LoadBalancer
