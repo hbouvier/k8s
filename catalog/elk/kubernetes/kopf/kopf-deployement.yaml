@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kopf
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: kopf
+        role: ui
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        tier: frontend       # frontend, backend, cache
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: kops
+        imagePullPolicy: Always # IfNotPresent, Always, Never
+        image: hbouvier/kopf-kubernetes:latest
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+        ports:
+          - name: http
+            containerPort: 8080
