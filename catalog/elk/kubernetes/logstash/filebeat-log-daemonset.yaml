@@ -5,15 +5,14 @@ metadata:
 spec:
   template:
     metadata:
+      name: filebeat-system-logs
       labels:
         app: elk
-        component: filebeat-log
-        role: collect-system-log
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: daemon         # frontend, backend, cache
+        component: filebeat
+        role: collect-system-logs
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
-      name: filebeat-log
     spec:
       containers:
       - name: filebeat

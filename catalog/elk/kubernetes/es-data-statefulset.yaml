@@ -11,9 +11,8 @@ spec:
         app: elk
         component: elasticsearch
         role: data
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: database       # frontend, backend, cache
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
       annotations:
         pod.beta.kubernetes.io/init-containers: '[
@@ -43,7 +42,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: "CLUSTER_NAME"
-          value: "myesdb"
+          value: "diagnostic"
         - name: NODE_MASTER
           value: "false"
         - name: NODE_INGEST
@@ -68,7 +67,7 @@ spec:
       name: storage
       annotations:
         # volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
-        volume.alpha.kubernetes.io/storage-class: anything        
+        volume.alpha.kubernetes.io/storage-class: ssd-encrypted        
     spec:
       accessModes:
       - ReadWriteOnce

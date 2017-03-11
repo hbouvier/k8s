@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filebeat-log
+  name: filebeat-system-logs
   labels:
     app: elk
-    component: filebeat-container
-    role: collect-container-log
+    component: filebeat
+    role: collect-system-logs
     release: stable      # canary
-    environment: staging # dev, qa, production
+    environment: dev     # dev, qa, production
     tier: daemon         # frontend, backend, cache
     partition: all       # customer_1, customer_2, developer_1, beta_release
 data:
@@ -17,30 +17,15 @@ data:
       prospectors:
         -
           paths:
-            - "/var/log/daemon.log"
+            - "/root/.*history"
+            - "/home/.*history"
+            - "/var/log/*.log"
             - "/var/log/syslog"
             - "/var/log/messages"
-            - "/var/log/auth.log"
-            - "/var/log/kern.log"
-            - "/var/log/kube-proxy.log"
-            - "/var/log/cloud-init.log"
-            - "/var/log/cloud-init-output.log"
-            - "/var/log/dpkg.log"
-            - "/var/log/alternatives.log"
-            - "/var/log/unattended-upgrades/unattended-upgrades.log"
-            - "/var/log/unattended-upgrades/unattended-upgrades-dpkg.log"
-            - "/var/log/user.log"
             - "/var/log/debug"
             - "/var/log/boot"
             - "/var/log/dmesg"
-            - "/root/.*history"
-            - "/home/.*history"
-            - "/var/log/udhcp.log"          # minikube
-            - "/var/log/boot2docker.log"    # minikube
-            - "/var/log/docker.log"         # minikube
-            - "/var/log/autologin"          # minikube
-            - "/var/log/parallels.log"      # minikube
-            - "/var/log/userdata.log"       # minikube
+            - "/var/log/autologin"
           input_type: log
           document_type: logs
     output:
