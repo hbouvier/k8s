@@ -1,4 +1,99 @@
-#
+# Kubernetes Bootstrap
+
+## Using MiniKube on your laptop
+
+### Install KubeCtl and MiniKube
+
+```bash
+brew install kubectl
+brew cask install minikube
+```
+
+### Create your local Kubernetes VM
+
+```bash
+minikube start --cpus 4 --disk-size 40g --memory 4096
+kubectl create -f storage-class/minikube-storage-class.yaml
+kubectl create -f catalog/heapster/kubernetes
+minikube dashboard
+```
+
+
+## Deploying components from the Catalog
+
+### ELK 
+
+```bash
+kubectl create namespace diagnostic
+kubectl create -f catalog/elk/kubernetes --namespace diagnostic
+
+minikube service elasticsearch --namespace diagnostic
+open "$(minikube service elasticsearch --namespace diagnostic --url)/_cat/nodes?v"
+
+kubectl create -f catalog/elk/kubernetes/logstash --namespace diagnostic
+```
+
+#### Kibana dashboard for logstash
+
+```bash
+kubectl create -f secret-templates/kibana-oauth-google-secret.yaml --namespace diagnostic
+kubectl create -f catalog/elk/kubernetes/kibana --namespace diagnostic
+minikube service kibana --namespace diagnostic
+```
+
+
+#### Manage ElasticSearch with Cerebro
+```bash
+kubectl create -f catalog/elk/kubernetes/cerebro --namespace diagnostic
+minikube service cerebro --namespace diagnostic
+```
+
+#### Manage ElasticSearch with kopf (deprecated)
+
+```bash
+kubectl create -f catalog/elk/kubernetes/kopf --namespace diagnostic
+kubectl port-forward $(kubectl get pod --namespace diagnostic | grep kopf | awk '{print $1}') 8080 --namespace diagnostic >& >/dev/null &
+open http://localhost:8080/kopf
+```
+
+
+```bash
+kubectl create namespace database
+kubectl create -f secret-templates/couchdb-secrets.yaml --namespace database
+kubectl create  --namespace database -f catalog/couchdb/kubernetes/
+open $(minikube service couchdb --namespace database --url)/_utils
+minikube service couchdb --namespace database
+```
+
+
+kubectl create -f catalog/couchdb/kubernetes/public-lb/couchdb-public-lb-configmap.base.yaml --namespace database
+kubectl create -f catalog/couchdb/kubernetes/public-lb/couchdb-public-lb-deployement.base.yaml --namespace database
+kubectl create -f catalog/couchdb/kubernetes/public-lb/couchdb-public-lb-service.minikube.yaml --namespace database
+
+
+
+curl -XPUT -vu admin:secret http://192.168.99.100:30984/_users/org.couchdb.user:pouch -H 'Content-Type: application/json' -d '{"_id": "org.couchdb.user:pouch","name": "pouch","roles":["read-test-pouchdb-sync","write-test-pouchdb-sync"], "type":"user","password":"changeme"}'
+
+curl -XPUT -vu admin:secret 192.168.99.100:30985/test-pouchdb-sync
+curl -XPUT -vu admin:secret 192.168.99.100:30985/test-pouchdb-sync/_security   -H 'Content-Type: application/json' -d '{"admins":{"names":[],"roles":[]}, "members":{"names":["pouch"],"roles":[]}}'
+
+curl -XPUT -vu admin:secret http://192.168.99.100:30984/_users/org.couchdb.user:anonymous -H 'Content-Type: application/json' -d '{"_id": "org.couchdb.user:anonymous","name": "anonymous","roles":[], "type":"user","password":"anonymous"}'
+
+
+
+kubectl create namespace message-bus
+kubectl create -f secret-templates/rabbitmq-secret.yaml --namespace message-bus
+kubectl create -f catalog/rabbitmq/kubernetes --namespace message-bus
+kubectl scale --replicas=2 statefulset/rabbitmq --namespace message-bus
+
+
+
+
+
+
+
+
+
 
 ## Use kops v1.4.4  (866ef8c)
 
