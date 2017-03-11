@@ -1,6 +1,14 @@
 #!/bin/bash
 set -eu
 
+# allow the container to be started with `--user`
+if [[ "$1" == rabbitmq* ]] && [ "$(id -u)" = '0' ]; then
+  if [ "$1" = 'rabbitmq-server' ]; then
+    chown -R rabbitmq /var/lib/rabbitmq
+  fi
+  exec gosu rabbitmq "$BASH_SOURCE" "$@"
+fi
+
 export RABBITMQ_NODENAME="rabbit@$(hostname -f)"
 export RABBITMQ_USE_LONGNAME=true
 export HOSTNAME=$(hostname -f)
@@ -9,14 +17,6 @@ echo "************* RABBITMQ_NODENAME     === '${RABBITMQ_NODENAME}' ***********
 echo "************* RABBITMQ_USE_LONGNAME === '${RABBITMQ_USE_LONGNAME}' *************************"
 (sleep 5 ; /bootstrap.sh ) &
 
-
-# allow the container to be started with `--user`
-if [[ "$1" == rabbitmq* ]] && [ "$(id -u)" = '0' ]; then
-  if [ "$1" = 'rabbitmq-server' ]; then
-    chown -R rabbitmq /var/lib/rabbitmq
-  fi
-  exec gosu rabbitmq "$BASH_SOURCE" "$@"
-fi
 
 # backwards compatibility for old environment variables
 : "${RABBITMQ_SSL_CERTFILE:=${RABBITMQ_SSL_CERT_FILE:-}}"

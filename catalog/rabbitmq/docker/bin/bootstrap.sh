@@ -4,7 +4,6 @@ set +e
 export RABBITMQ_NODENAME="rabbit@$(hostname -f)"
 export RABBITMQ_USE_LONGNAME=true
 export HOSTNAME=$(hostname -f)
-rabbitmqctl cluster_status
 
 FULL_NODE_NAME=$(hostname -f)
 NODE_NAME=$(hostname -s)   # rabbitmq-1
@@ -25,18 +24,37 @@ printf "Bootstraping...\n"
 printf "\tMaster node: ${MASTER_NODE}\n"
 
 function is_registered_with_master_node() {
-  COUNT=$(rabbitmqctl cluster_status | grep ${MASTER_NODE} | wc -l)
-  if [ "${COUNT}" == "4" ] ; then
-    REGISTERED=yes
-  else
-    REGISTERED=no
-  fi
+  KEEP_RUNNING=1
+  REGISTERED=no
+  while [ ${KEEP_RUNNING} == 1 ] ; do
+    LINE_COUNT=$(rabbitmqctl cluster_status | wc -l)
+    printf "\t${LINE_COUNT}\n"
+    if [ ${LINE_COUNT} -gt 1 ] ; then
+      KEEP_RUNNING=0
+      MASTER_COUNT=$(rabbitmqctl cluster_status | grep ${MASTER_NODE} | wc -l)
+      printf "MASTER_COUNT:\t${MASTER_COUNT}\n"
+      if [ "${MASTER_COUNT}" != "0" ] ; then
+        REGISTERED=yes
+      else
+        REGISTERED=no
+      fi
+    fi
+    printf "\tRegistered ${REGISTERED}\n"
+  done
 }
 
 function register_node() {
+  printf "\tStopping RabbitMQ"
   rabbitmqctl stop_app
+  printf "\t$?\n"
+  sleep 5
+  printf "\tJoining cluser"
   rabbitmqctl join_cluster ${MASTER_NODE}
+  printf "\t$?\n"
+  sleep 5
+  printf "\tStarting RabbitMQ"
   rabbitmqctl start_app
+  printf "\t$?\n"
 }
 
 if [ ${ORD} == "0" ] ; then
@@ -44,6 +62,7 @@ if [ ${ORD} == "0" ] ; then
 else
   is_registered_with_master_node
   if [ "${REGISTERED}" == "no" ] ; then
+    sleep 15
     printf "\tRegistering ${NODE_NAME} with master node."
   fi
   while [ "${REGISTERED}" == "no" ] ; do

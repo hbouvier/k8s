@@ -63,13 +63,29 @@ spec:
           name: web
         - containerPort: 25672
           name: discovery
+        readinessProbe:
+          failureThreshold: 10
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        livenessProbe:
+          failureThreshold: 3
+          tcpSocket:
+            port: 5672
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
-            memory: 256Mi
+            memory: 150Mi
           limits:
-            cpu: 2
-            memory: 1Gi
+            cpu: 1
+            memory: 512Mi
   #       volumeMounts:
   #       - mountPath: /var/lib/rabbitmq
   #         name: data
