@@ -1,0 +1,112 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "2"
+  # creationTimestamp: 2017-02-11T22:01:38Z
+  generation: 2
+  labels:
+    k8s-addon: monitoring-standalone.addons.k8s.io
+    k8s-app: heapster
+    kubernetes.io/cluster-service: "true"
+    version: v1.2.0
+  name: heapster
+  namespace: kube-system
+  # resourceVersion: "2618317"
+  # selfLink: /apis/extensions/v1beta1/namespaces/kube-system/deployments/heapster
+  # uid: a96c3de1-f0a5-11e6-8535-0aa203be377a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: heapster
+      version: v1.2.0
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+        scheduler.alpha.kubernetes.io/tolerations: '[{"key":"CriticalAddonsOnly", "operator":"Exists"}]'
+      # creationTimestamp: null
+      labels:
+        k8s-app: heapster
+        version: v1.2.0
+    spec:
+      containers:
+      - command:
+        - /heapster
+        - --source=kubernetes.summary_api:''
+        image: gcr.io/google_containers/heapster:v1.2.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8082
+            scheme: HTTP
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: heapster
+        resources:
+          limits:
+            cpu: 88m
+            memory: 204Mi
+          requests:
+            cpu: 88m
+            memory: 204Mi
+        terminationMessagePath: /dev/termination-log
+      - command:
+        - /pod_nanny
+        - --cpu=80m
+        - --extra-cpu=0.5m
+        - --memory=140Mi
+        - --extra-memory=4Mi
+        - --threshold=5
+        - --deployment=heapster
+        - --container=heapster
+        - --poll-period=300000
+        - --estimator=exponential
+        env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: gcr.io/google_containers/addon-resizer:1.6
+        imagePullPolicy: IfNotPresent
+        name: heapster-nanny
+        resources:
+          limits:
+            cpu: 50m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 100Mi
+        terminationMessagePath: /dev/termination-log
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+# status:
+#   availableReplicas: 1
+#   conditions:
+#   - lastTransitionTime: 2017-02-11T22:01:38Z
+#     lastUpdateTime: 2017-02-11T22:01:38Z
+#     message: Deployment has minimum availability.
+#     reason: MinimumReplicasAvailable
+#     status: "True"
+#     type: Available
+#   observedGeneration: 2
+#   replicas: 1
+#   updatedReplicas: 1

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-addon: monitoring-standalone.addons.k8s.io
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: Heapster
+  name: heapster
+  namespace: kube-system
+spec:
+  # clusterIP: 100.65.12.171
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8082
+  selector:
+    k8s-app: heapster
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
