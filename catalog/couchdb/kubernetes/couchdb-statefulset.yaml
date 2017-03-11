@@ -2,16 +2,6 @@ apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: couchdb
-  # these labels can be applied automatically
-  # from the labels in the pod template if not set
-  # labels:
-  #   app: botvm
-  #   component: couchdb
-  #   role: event-store
-  #   release: stable      # canary
-  #   environment: staging # dev, qa, production
-  #   tier: database       # frontend, backend, cache
-  #   partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
   serviceName: couchdb
   replicas: 1
@@ -20,12 +10,11 @@ spec:
       annotations:
         pod.alpha.kubernetes.io/initialized: "true"
       labels:
-        app: couchdb
+        app: nosql
         component: couchdb
-        role: store
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: database       # frontend, backend, cache
+        role: master
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
     spec:
       restartPolicy: Always
@@ -43,6 +32,8 @@ spec:
         ports:
         - containerPort: 5984
           name: data
+        - containerPort: 5986
+          name: local
         - containerPort: 4369
           name: epmd
         - containerPort: 9100
@@ -72,10 +63,10 @@ spec:
           failureThreshold: 5
         volumeMounts:
         - mountPath: /opt/couchdb/data
-          name: data
+          name: storage
         - mountPath: /opt/couchdb/etc/default.d
           name:  defaultd
-      - name: couchdb-k8s-bootstrap
+      - name: bootstrap
         image: hbouvier/couchdb-bootstrap-kubernetes:2.0.0
         imagePullPolicy: Always # IfNotPresent, Always, Never
         env:
@@ -116,16 +107,16 @@ spec:
           items:
             - key: kubernetes.ini
               path: kubernetes.ini
-      - name: data
+      - name: storage
         persistentVolumeClaim:
-          claimName: data
+          claimName: storage
 
   volumeClaimTemplates:
   - metadata:
-      name: data
+      name: storage
       annotations:
         # volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
-        volume.alpha.kubernetes.io/storage-class: anything        
+        volume.alpha.kubernetes.io/storage-class: ssd-encrypted        
     spec:
       accessModes:
       - ReadWriteOnce

@@ -1,17 +1,17 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: couchdb-public-lb
+  name: couchdb-public-load-balancer
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: couchdb
+        app: nosql
         component: nginx
-        role: proxy
-        release: stable      # canary
-        environment: staging # dev, qa, production
+        role: public-load-balancer
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
     spec:
       containers:

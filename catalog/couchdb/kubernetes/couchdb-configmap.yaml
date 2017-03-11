@@ -3,12 +3,11 @@ apiVersion: v1
 metadata:
   name: couchdb
   labels:
-    app: couchdb
+    app: nosql
     component: couchdb
-    role: member
-    release: stable      # canary
-    environment: staging # dev, qa, production
-    tier: database       # frontend, backend, cache
+    role: master
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 data:
   # Erlang VM settings. The -name flag activates the Erlang distribution; there
