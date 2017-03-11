@@ -51,7 +51,6 @@ function register_node() {
   printf "\tJoining cluser"
   rabbitmqctl join_cluster ${MASTER_NODE}
   printf "\t$?\n"
-  sleep 5
   printf "\tStarting RabbitMQ"
   rabbitmqctl start_app
   printf "\t$?\n"
@@ -62,7 +61,6 @@ if [ ${ORD} == "0" ] ; then
 else
   is_registered_with_master_node
   if [ "${REGISTERED}" == "no" ] ; then
-    sleep 15
     printf "\tRegistering ${NODE_NAME} with master node."
   fi
   while [ "${REGISTERED}" == "no" ] ; do

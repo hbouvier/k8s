@@ -2,16 +2,6 @@ apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: rabbitmq
-  # these labels can be applied automatically
-  # from the labels in the pod template if not set
-  # labels:
-  #   app: botvm
-  #   component: couchdb
-  #   role: event-store
-  #   release: stable      # canary
-  #   environment: staging # dev, qa, production
-  #   tier: database       # frontend, backend, cache
-  #   partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
   serviceName: rabbitmq
   replicas: 1
@@ -20,12 +10,11 @@ spec:
       annotations:
         pod.alpha.kubernetes.io/initialized: "true"
       labels:
-        app: rabbitmq
+        app: message-bus
         component: rabbitmq
-        role: message-bus
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: message-bus    # frontend, backend, cache
+        role: master
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
     spec:
       restartPolicy: Always
@@ -60,11 +49,11 @@ spec:
         - containerPort: 4369
           name: epmd
         - containerPort: 15672
-          name: web
+          name: http
         - containerPort: 25672
           name: discovery
         readinessProbe:
-          failureThreshold: 10
+          failureThreshold: 30
           tcpSocket:
             port: 5672
           initialDelaySeconds: 15
