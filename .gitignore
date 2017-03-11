@@ -1,3 +1,4 @@
+/.stash
 secrets/*.yaml
 secrets/*.yml
 JOURNAL.md
