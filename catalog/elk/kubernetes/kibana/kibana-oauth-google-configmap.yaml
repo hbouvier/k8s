@@ -5,17 +5,16 @@ metadata:
   labels:
     app: elk
     component: kibana
-    role: ui
-    release: stable      # canary
-    environment: staging # dev, qa, production
-    tier: frontend       # frontend, backend, cache
+    role: dashboard
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 data:
   oauth2_proxy.cfg: |
     ## OAuth2 Proxy Config File
 
     cookie_name = "_oauth2_proxy"
-    cookie_domain = "localhost"
+    cookie_domain = "192.168.99.100"
     cookie_expire = "1h"
     cookie_refresh = "15m"
     cookie_httponly = true

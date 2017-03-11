@@ -9,10 +9,9 @@ spec:
       labels:
         app: elk
         component: logstash
-        role: collect-publish-log
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: daemon         # frontend, backend, cache
+        role: aggregator
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
     spec:
       containers:

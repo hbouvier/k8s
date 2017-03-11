@@ -5,10 +5,9 @@ metadata:
   labels:
     app: elk
     component: cerebro
-    role: ui
-    release: stable      # canary
-    environment: staging # dev, qa, production
-    tier: frontend       # frontend, backend, cache
+    role: ui-management
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 data:
   application.conf: |

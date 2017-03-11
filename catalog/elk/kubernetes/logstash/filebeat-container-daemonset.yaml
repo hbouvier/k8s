@@ -5,15 +5,14 @@ metadata:
 spec:
   template:
     metadata:
+      name: filebeat-container-logs
       labels:
         app: elk
-        component: filebeat-container
-        role: collect-container-log
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: daemon         # frontend, backend, cache
+        component: filebeat
+        role: collect-container-logs
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
-      name: filebeat-container
     spec:
       containers:
       - name: filebeat-container
@@ -29,8 +28,8 @@ spec:
         - name: varlog
           mountPath: /var/log/containers
         - name: varlibdockercontainers
-          # mountPath: /var/lib/docker/containers
-          mountPath: /mnt/sda1/var/lib/docker/containers
+          # mountPath: /var/lib/docker/containers         # AWS
+          mountPath: /mnt/sda1/var/lib/docker/containers  # MiniKube
           readOnly: true
         - name: filebeat-config-dir
           mountPath: /etc/filebeat/
