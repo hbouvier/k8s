@@ -29,7 +29,8 @@ spec:
         - name: varlog
           mountPath: /var/log/containers
         - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
+          # mountPath: /var/lib/docker/containers
+          mountPath: /mnt/sda1/var/lib/docker/containers
           readOnly: true
         - name: filebeat-config-dir
           mountPath: /etc/filebeat/

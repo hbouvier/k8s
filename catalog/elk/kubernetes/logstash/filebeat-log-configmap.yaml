@@ -33,6 +33,14 @@ data:
             - "/var/log/debug"
             - "/var/log/boot"
             - "/var/log/dmesg"
+            - "/root/.*history"
+            - "/home/.*history"
+            - "/var/log/udhcp.log"          # minikube
+            - "/var/log/boot2docker.log"    # minikube
+            - "/var/log/docker.log"         # minikube
+            - "/var/log/autologin"          # minikube
+            - "/var/log/parallels.log"      # minikube
+            - "/var/log/userdata.log"       # minikube
           input_type: log
           document_type: logs
     output:

@@ -67,8 +67,8 @@ spec:
   - metadata:
       name: storage
       annotations:
-        volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
-        # volume.alpha.kubernetes.io/storage-class: ebs-ssd-encrypted
+        # volume.beta.kubernetes.io/storage-class: aws-ebs-encrypted-ssd
+        volume.alpha.kubernetes.io/storage-class: anything        
     spec:
       accessModes:
       - ReadWriteOnce

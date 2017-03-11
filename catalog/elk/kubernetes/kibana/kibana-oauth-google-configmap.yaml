@@ -15,7 +15,7 @@ data:
     ## OAuth2 Proxy Config File
 
     cookie_name = "_oauth2_proxy"
-    cookie_domain = "domain.com"
+    cookie_domain = "localhost"
     cookie_expire = "1h"
     cookie_refresh = "15m"
     cookie_httponly = true
@@ -24,7 +24,7 @@ data:
     cookie_secure = false # REMOVE ME FOR HTTPs
 
     # email_domains = [
-    #   "domain.com"
+    #   "localhost"
     # ]
 
     ## the OAuth Redirect URL.
