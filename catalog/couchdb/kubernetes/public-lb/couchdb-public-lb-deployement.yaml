@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: couchdb-public-lb
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: couchdb
+        component: nginx
+        role: proxy
+        release: stable      # canary
+        environment: staging # dev, qa, production
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: nginx
+        imagePullPolicy: Always
+        image: nginx:1.10
+        ports:
+          - name: http
+            containerPort: 80
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx/conf.d
+        - name: www
+          mountPath: /var/www
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: couchdb-public-lb-config
+            items:
+            - key: default.conf
+              path: default.conf
+        - name: www
+          configMap:
+            name: couchdb-public-lb-config
+            items:
+            - key: index.html
+              path: index.html

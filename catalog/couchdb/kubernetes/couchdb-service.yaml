@@ -12,7 +12,6 @@ metadata:
     partition: all       # customer_1, customer_2, developer_1, beta_release
   name: couchdb
 spec:
-  clusterIP: None
   ports:
   - name: data
     port: 5984
