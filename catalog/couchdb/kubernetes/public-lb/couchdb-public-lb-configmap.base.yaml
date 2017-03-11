@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: couchdb-public-lb-config
+  labels:
+    app: nosql
+    component: couchdb
+    role: public-load-balancer
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+data:
+  default.conf: |-
+    upstream proxy-service {
+      server couchdb-cluster:5984;
+      keepalive 128;
+    }
+
+    geo $block_unknown_cidr {
+      proxy  10.0.0.0/8;
+      default              1;   # Block all by default
+    # W.X.Y.Z/32           0;   # Allow this ip only
+    }
+
+    server {
+      listen       80;
+
+      location /index.html { alias /var/www/index.html; }
+
+      location /_utils {
+
+        if ($block_unknown_cidr) {
+          return 444;
+        }
+
+        proxy_pass  http://proxy-service;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-Start $msec;
+      }
+
+      location ~ ^/$ { return 444; }
+      location ~ ^/_ { return 444; }
+
+      location / {
+        proxy_pass  http://proxy-service;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-Start $msec;
+      }
+
+      location ~ ^/(.*)/_changes {
+        proxy_pass  http://proxy-service;
+        proxy_redirect off;
+        proxy_buffering off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-Start $msec;
+      }
+
+    }
+
+  index.html: |-
+    <html>
+      <head>
+        <script type="text/javascript" src="//cdn.jsdelivr.net/pouchdb/6.1.2/pouchdb.min.js"></script>
+        <script defer type="text/javascript">
+          Element.prototype.remove = function() {
+              this.parentElement.removeChild(this);
+          }
+          NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+              for(var i = this.length - 1; i >= 0; i--) {
+                  if(this[i] && this[i].parentElement) {
+                      this[i].parentElement.removeChild(this[i]);
+                  }
+              }
+          }
+
+
+          var localDB = new PouchDB('mylocaldb')
+          var remoteDB = new PouchDB('http://pouch:changeme@192.168.99.100:30985/test-pouchdb-sync')
+          var opts = {live: true, retry: true};
+          var syncHandle = localDB.sync(remoteDB, opts);
+
+          localDB.allDocs({
+            include_docs: true,
+            attachments: true
+          }).then(function (result) {
+            if (result && result.rows) {
+              var elem = document.getElementById('elements');
+              result.rows.forEach( row => {
+                  var node = document.createElement("div");
+                  node.setAttribute("id", row.id);
+                  node.innerHTML = '<h3>'+row.doc.text+'</h3>';
+                  elem.appendChild(node);
+              });
+            }
+
+            localDB.changes({
+              since: 'now',
+              live: true,
+              include_docs: true
+            }).on('change', function (change) {
+              // change.id contains the doc id, change.doc contains the doc
+              if (change.deleted) {
+                // document was deleted
+                document.getElementById(change.id).remove();
+              } else {
+                var node = document.getElementById(change.id);
+                if (node) {
+                  node.innerHTML = '<h3>'+change.doc.text+'</h3>';
+                } else {
+                  var elem = document.getElementById('elements');
+                  var node = document.createElement("div");
+                  node.setAttribute("id", change.id);
+                  node.innerHTML = '<h3>'+change.doc.text+'</h3>';
+                  elem.appendChild(node);
+                }
+                // document was added/modified
+              }
+            }).on('error', function (err) {
+              alert('bobo');
+            });
+          }).catch(function (err) {
+            alert('ouch');
+          });
+
+          function ok(evt) {
+            var value = document.getElementById("text").value;
+            var doc = {
+                _id: new Date().toISOString(),
+                text: value
+              };
+            localDB.put(doc, function callback(err, result) {
+              if (err) return console.log('err:', err);
+              console.log('Successfully posted a document!', doc);
+            });            
+          }
+          function cancel() {
+            syncHandle.cancel();
+          }
+        </script>
+      </head>
+      <body>
+        <h1> PouchDB <==> CouchdB </h1>
+        <label> Value
+          <input id="text" type="field" value=""/>
+        </label>
+        <input type="button" value="OK" onclick="ok()"/>
+        <input type="button" value="Cancel" onclick="cancel()"/>
+        <div id="elements">
+        </div>
+      </body>
+    </html>

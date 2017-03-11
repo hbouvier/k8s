@@ -1,8 +1,8 @@
-# Ensures individual Pets get their own DNS entries
+# Ensures individual StatefulSet get their own DNS entries (e.g. couchdb-0.couchdb.namespace.svc.cluster.local)
 apiVersion: v1
 kind: Service
 metadata:
-  name: couchdb-cluster
+  name: couchdb
   labels:
     app: nosql
     component: couchdb
@@ -11,12 +11,17 @@ metadata:
     environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
-  type: NodePort
+  clusterIP: None
   ports:
-  - name: http
+  - name: data
     port: 5984
-    nodePort: 30984
+  - name: local
+    port: 5986
+  - name: epmd
+    port: 4369
+  - name: erlang-dist
+    port: 9100
   selector:
     app: nosql
     component: couchdb
-    role: master
+ 
