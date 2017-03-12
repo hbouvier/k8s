@@ -28,8 +28,8 @@ spec:
         - name: varlog
           mountPath: /var/log/containers
         - name: varlibdockercontainers
-          # mountPath: /var/lib/docker/containers         # AWS
-          mountPath: /mnt/sda1/var/lib/docker/containers  # MiniKube
+          mountPath: /var/lib/docker/containers             # AWS
+          # mountPath: /mnt/sda1/var/lib/docker/containers  # MiniKube
           readOnly: true
         - name: filebeat-config-dir
           mountPath: /etc/filebeat/
@@ -43,7 +43,7 @@ spec:
           path: /var/lib/docker/containers
       - name: filebeat-config-dir
         configMap:
-          name: filebeat-container
+          name: filebeat-container-logs
           items:
           - key: filebeat.yml
             path: filebeat.yml
