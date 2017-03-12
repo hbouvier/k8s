@@ -31,6 +31,36 @@ spec:
         volumeMounts:
         - mountPath: /opt/cerebro/conf
           name: cerebro-conf
+      - name: oauth2-proxy
+        image: a5huynh/oauth2_proxy # https://github.com/bitly/oauth2_proxy
+        args:
+          - "-upstream=http://localhost:9000/"
+          - "-http-address=0.0.0.0:4180"
+          - "-config=/etc/oauth2_proxy/config/oauth2_proxy.cfg"
+        env:
+          - name: OAUTH2_PROXY_COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: cerebro-oauth-google
+                key: cookie-secret
+          - name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: cerebro-oauth-google
+                key: client-id
+          - name: OAUTH2_PROXY_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: cerebro-oauth-google
+                key: client-secret
+        ports:
+          - name: http
+            containerPort: 4180
+        volumeMounts:
+        - mountPath: /etc/oauth2_proxy/config
+          name: oauth2-proxy
+        - mountPath: /etc/oauth2_proxy/passwords
+          name: htpasswd
       volumes:
       - name: cerebro-conf
         configMap:
@@ -38,3 +68,16 @@ spec:
           items:
             - key: application.conf
               path: application.conf
+      - name: oauth2-proxy
+        configMap:
+          name: cerebro-oauth
+          items:
+            - key: oauth2_proxy.cfg
+              path: oauth2_proxy.cfg
+      - name: htpasswd
+        secret:
+          secretName: cerebro-oauth-google
+          items:
+          - key: htpasswd
+            path: .htpasswd
+            mode: 0644  
