@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: public-couchdb-cluster
+  labels:
+    app: nosql
+    component: couchdb
+    role: load-balancer
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+  annotations:
+    # AWS Managed cert ARN
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+spec:
+  type: LoadBalancer
+  sessionAffinity: None
+  selector:
+    app: nosql
+    role: master
+    component: couchdb
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 5984
