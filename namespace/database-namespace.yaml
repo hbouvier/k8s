@@ -1,0 +1,7 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: database
+  labels:
+    environment: dev     # dev, staging, qa, production
+    partition: all       # customer_1, customer_2, developer_1, beta_release
