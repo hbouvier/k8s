@@ -22,7 +22,7 @@ data:
 
     # The application languages
     # ~~~~~
-    application.langs="en"
+    play.i18n.langs=["en"]
 
     play.modules.enabled += "controllers.auth.Module"
     play.modules.enabled += "elastic.ElasticModule"
@@ -36,23 +36,35 @@ data:
       #    password = "secret-password"
       #  }
       #},
+      #{
+      #  host = "http://localhost:9200"
+      #  name = "Some Cluster"
+      #}
       {
        host = "http://elasticsearch:9200"
-       name = "ELK"
+       name = "ELK - system diagnostic"
       }
     ]
 
     auth {
-    //  type: ldap
-    //    settings: {
-    //      url = "ldap://host:port"
-    //      base-dn = "ou=active,ou=Employee"
-    //      method  = "simple"
-    //      user-domain = "domain.com"
-    //    }
-    //  type: basic
-    //  settings: {
-    //    username = "admin"
-    //    password = "1234"
-    //  }
+    #   type: ldap
+    #     settings: {
+    #       url = "ldap://host:port"
+    #       base-dn = "ou=active,ou=Employee"
+    #       method  = "simple"
+    #       user-domain = "domain.com"
+    #     }
+    #   type: basic
+    #   settings: {
+    #     username = "admin"
+    #     password = "1234"
+    #   }
     }
+
+    rest.history.size: 50 // defaults to 50 if not specified
+    data.path: "./cerebro.db"
+
+    slick.dbs.default.driver="slick.driver.SQLiteDriver$"
+    slick.dbs.default.db.driver=org.sqlite.JDBC
+    slick.dbs.default.db.url="jdbc:sqlite:"${data.path}
+    play.evolutions.db.default.autoApply = true
