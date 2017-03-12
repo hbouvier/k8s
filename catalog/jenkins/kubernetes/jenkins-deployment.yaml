@@ -2,23 +2,34 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: jenkins
-  namespace: ci
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: ci
+        app: continuous-integration
         component: jenkins
         role: master
-        release: stable      # canary
-        environment: staging # dev, qa, production
-        tier: ci             # frontend, backend, cache
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
         partition: all       # customer_1, customer_2, developer_1, beta_release
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "chown",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["/bin/sh", "-c", "mkdir -p /var/jenkins_home && chown 1000:1000 /var/jenkins_home"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
     spec:
       containers:
       - name: master
-        image: jenkins:2.7.2
+        image: hbouvier/jenkins-kubernetes:2.32.3
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         - containerPort: 50000
@@ -44,15 +55,15 @@ spec:
           readOnly: false
         resources:
           limits:
-            cpu: 500m
+            cpu: 1
             memory: 1500Mi
           requests:
-            cpu: 500m
-            memory: 1500Mi
+            cpu: 1m
+            memory: 512Mi
       volumes:
       - name: jenkins-home
         persistentVolumeClaim:
-          claimName: jenkins-master-pvc
+          claimName: jenkins-home
       - name: docker-socket
         hostPath:
           path: /var/run/docker.sock
