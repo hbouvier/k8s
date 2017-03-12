@@ -1,0 +1,27 @@
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: curator-global-changes
+spec:
+  schedule: 1 0 * * *
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curator
+            image: busybox
+            args: ["curl", "-u", "${COUCHDB_USER}:${COUCHDB_PASSWORD}", -v", -H", "Content-Type: application/json", "-X", "POST", "http://couchdb-cluster:5984/_global_changes/_compact"]
+            env:
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-curator-account
+                  key: username
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-curator-account
+                  key: password
+          restartPolicy: OnFailure
+
