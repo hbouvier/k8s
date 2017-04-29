@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 if [ "$1" = 'jenkins' ]; then
-    chown -R jenkins:jenkins "$JENKINS_HOME"
+    chown -R jenkins:jenkins "$JENKINS_HOME" /var/run/docker.sock
     exec gosu "$@"
 fi
 exec "$@"
