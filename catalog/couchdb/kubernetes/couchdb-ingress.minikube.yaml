@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: couchdb
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app: nosql
+    component: couchdb
+    role: couchdb-ingress
+    release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+    environment: dev     # dev, staging, qa, production
+    partition: all       # customer_1, customer_2, developer_1, beta_release
+spec:
+  backend:
+    serviceName: default-http-backend
+    servicePort: 80
+  rules:
+  - host: couchdb.cluster.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: couchdb-cluster
+          servicePort: 5984

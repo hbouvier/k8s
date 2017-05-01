@@ -10,7 +10,6 @@ metadata:
     environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
-  type: NodePort
   selector:
     app: continuous-integration
     component: jenkins
@@ -19,4 +18,3 @@ spec:
   - name: http
     protocol: TCP
     port: 8080
-    nodePort: 30080

@@ -5,13 +5,12 @@ metadata:
   labels:
     app: elk
     component: kibana
-    role: load-balancer
+    role: dashboard
     release: stable      # stable, canary, alpha, beta, experimental, latest, debug
     environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
   annotations:
 spec:
-  type: NodePort
   selector:
     app: elk
     component: kibana
@@ -19,4 +18,3 @@ spec:
   - port: 4180
     name: http
     protocol: TCP
-    nodePort: 32002

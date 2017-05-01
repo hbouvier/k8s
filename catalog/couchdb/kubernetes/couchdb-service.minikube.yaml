@@ -11,11 +11,9 @@ metadata:
     environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
-  type: NodePort
   ports:
   - name: http
     port: 5984
-    nodePort: 30984
   selector:
     app: nosql
     component: couchdb

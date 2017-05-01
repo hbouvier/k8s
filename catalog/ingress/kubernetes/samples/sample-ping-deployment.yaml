@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sample-ping-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sample-ping-app
+        component: nginx
+        role: sample-ping-app
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: dev     # dev, staging, qa, production
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+      - name: sample-ping-nginx
+        imagePullPolicy: Always
+        image: nginx:1.11
+        ports:
+          - name: http
+            containerPort: 80
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: sample-ping-config
+            items:
+            - key: default.conf
+              path: default.conf
