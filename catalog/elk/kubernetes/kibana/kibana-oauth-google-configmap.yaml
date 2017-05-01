@@ -14,7 +14,7 @@ data:
     ## OAuth2 Proxy Config File
 
     cookie_name = "_oauth2_proxy"
-    cookie_domain = "192.168.99.100"
+    cookie_domain = "kibana.cluster.local"
     cookie_expire = "1h"
     cookie_refresh = "15m"
     cookie_httponly = true

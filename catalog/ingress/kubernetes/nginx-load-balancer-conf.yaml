@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-load-balancer-conf
+  namespace: kube-system
+  # selfLink: /api/v1/namespaces/kube-system/configmaps/nginx-load-balancer-conf
+  # uid: 127ff9ca-2d19-11e7-85c9-08002776fed5
+  labels:
+    kubernetes.io/cluster-service: "true"
+data:
+  enable-vts-status: "true"
+  map-hash-bucket-size: "128"

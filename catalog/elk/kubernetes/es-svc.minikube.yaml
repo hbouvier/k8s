@@ -10,7 +10,6 @@ metadata:
     environment: dev     # dev, staging, qa, production
     partition: all       # customer_1, customer_2, developer_1, beta_release
 spec:
-  type: NodePort
   selector:
     component: elasticsearch
     role: client
@@ -18,4 +17,3 @@ spec:
   - name: http
     port: 9200
     protocol: TCP
-    nodePort: 32000 # MiniKube
