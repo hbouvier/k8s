@@ -1,0 +1,9 @@
+---
+- include: deploy.yml
+  when: mode == "deploy"
+
+- include: clean.yml
+  when: mode == "clean"
+
+- include: uninstall.yml
+  when: mode == "uninstall"

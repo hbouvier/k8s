@@ -1,0 +1,7 @@
+---
+# minikubeVM: Running | minikubeVM: Stopped | minikubeVM: Does Not Exist
+# localkube: Running  | localkube: N/A      | localkube: N/A
+- name: minikube virtual machine status
+  shell: >
+    minikube delete
+  ignore_errors: true

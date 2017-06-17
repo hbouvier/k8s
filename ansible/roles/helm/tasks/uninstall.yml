@@ -1,0 +1,6 @@
+---
+- name: Uninstall helm-cli
+  shell: >
+    brew uninstall kubernetes-helm
+  ignore_errors: true
+

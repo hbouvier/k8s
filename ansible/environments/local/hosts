@@ -1,0 +1,28 @@
+; used for local actions only
+ansible ansible_connection=local
+
+[minikube]
+master          ansible_connection=local ansible_host=127.0.0.1
+
+[gke]
+master          ansible_connection=local ansible_host=127.0.0.1
+
+[minikube:vars]
+minikube_cpus=4
+minikube_disk_size=100g
+minikube_memory=4096
+
+
+[gke:vars]
+mode=deploy
+disk_size=100
+zone=us-west1-a
+machine_type=n1-standard-2
+version=1.6.4
+min_nodes=1
+max_nodes=16
+node_pool_name=default-pool
+rbac_namespace=cluster
+namespaces=["frontend","backend"]
+bucket=acme-bucket
+configuration=default

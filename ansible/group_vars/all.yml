@@ -1,0 +1,5 @@
+mode: deploy
+
+kubernetes:
+  root:
+    path: "{{home}}/gcloud/{{project_name}}/{{cluster_name}}/"

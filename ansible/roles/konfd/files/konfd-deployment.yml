@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: konfd
+  namespace: kube-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      labels:
+        app: konfd
+        component: konfd
+        role: konfiguration-daemon
+        release: stable      # stable, canary, alpha, beta, experimental, latest, debug
+        environment: staging # dev, staging, qa, production
+        partition: all       # customer_1, customer_2, developer_1, beta_release
+    spec:
+      containers:
+        - name: konfd
+          image: "hbouvier/konfd:v0.0.4"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 30Mi
+        - name: kubectl
+          image: "gcr.io/google_containers/hyperkube:v1.4.6"
+          command:
+            - "/hyperkube"
+          args:
+            - "kubectl"
+            - "proxy"

@@ -1,0 +1,22 @@
+---
+
+- name: set namespace to {{ item }}
+  set_fact:
+    namespace: "{{ item }}"
+
+- name: delete admin and developer role from namespaces {{ namespace }}
+  shell: |
+    kubectl delete role "{{ rbac_namespace }}:admin" --namespace {{ namespace }}
+    kubectl delete role "{{ rbac_namespace }}:developer" --namespace {{ namespace }}
+  ignore_errors: true
+
+
+- name: delete private dockerhub credentials from namespace {{ namespace }}
+  shell: |
+    kubectl delete secret docker-hub-private-registry --namespace {{namespace}}
+  ignore_errors: true
+
+- name: delete namespace {{namespace}}
+  shell: |
+    kubectl delete ns {{ namespace }}
+  ignore_errors: true

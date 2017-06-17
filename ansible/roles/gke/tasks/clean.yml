@@ -1,0 +1,12 @@
+---
+- name: "DESTROY the GKE cluster {{ cluster_name }} in project {{ project_name }}"
+  pause: prompt='Please confirm you are you ABSOLUTLY SURE! Press return to continue. Press Ctrl+c and then "a" to abort'
+  register: result
+
+- debug: var=result
+
+- name: DESTROY the GKE cluster
+  shell: >
+    gcloud container clusters delete {{cluster_name}} --quiet
+  register: gcloud_cluster_creation
+  when: gcloud_credentials.rc == 0

@@ -1,0 +1,47 @@
+---
+
+- name: Create GKE cluster {{ cluster_name }} in project {{ project_name }}
+  shell: >
+    gcloud container clusters create {{ cluster_name }} \
+          --disk-size {{ disk_size }} \
+          --zone {{ zone }} \
+          --no-enable-legacy-authorization \
+          --enable-cloud-logging \
+          --enable-cloud-monitoring \
+          --machine-type {{ machine_type }} \
+          --num-nodes {{ min_nodes }} \
+          --quiet
+  register: gcloud_cluster_creation
+  when: gcloud_credentials.rc != 0
+
+- debug: var=gcloud_cluster_creation
+
+- name: Show configurations
+  shell: >
+    gcloud config configurations list
+  register: configuration_list
+
+- debug: var=configuration_list
+
+- name: Upgrade Kubernetes to version {{ version | default(inventory_version, true) }}
+  shell: |
+    gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --master --quiet
+    gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --node-pool={{ node_pool_name }} --quiet
+  when: gcloud_credentials.rc != 0
+
+- name: Enable Autoscaling
+  shell: >
+    gcloud alpha container clusters update {{cluster_name}} \
+        --enable-autoscaling --min-nodes={{ min_nodes }} \
+        --max-nodes={{ max_nodes }} \
+        --zone={{ zone }} \
+        --node-pool={{ node_pool_name }} \
+        --quiet
+  when: gcloud_credentials.rc != 0
+
+- name: Obtain newly create GKE cluster credentials
+  shell: |
+    gcloud container clusters get-credentials {{cluster_name}}
+    kubectx {{ configuration }}=gke_{{project_name}}_{{ zone }}_{{ cluster_name }}
+  register: gcloud_credentials_after_creation
+  when: gcloud_credentials.rc != 0

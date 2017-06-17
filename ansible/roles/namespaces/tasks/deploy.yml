@@ -1,0 +1,48 @@
+---
+
+- name: set namespace to {{ item }}
+  set_fact:
+    namespace: "{{ item }}"
+
+- debug: var=namespace
+- debug: var=kubernetes.root.path
+
+- name: "mkdir {{ kubernetes.root.path }}/{{ namespace }}"
+  file:
+    path: "{{ kubernetes.root.path }}/{{ namespace }}"
+    state: directory
+
+- name: render admin-role.yaml for namespace {{ namespace }}
+  template:
+    src: "templates/admin-role.yaml.j2"
+    dest: "{{ kubernetes.root.path }}/{{ namespace }}/admin-role.yaml"
+
+- name: render developer-role.yaml for namespace {{ namespace }}
+  template:
+    src: "templates/developer-role.yaml.j2"
+    dest: "{{ kubernetes.root.path }}/{{ namespace }}/developer-role.yaml"
+
+- name: create namespace {{namespace}}
+  shell: |
+    kubectl get ns {{ namespace }} || kubectl create ns {{ namespace }}
+
+- name: add private dockerhub credentials to namespace {{ namespace }}
+  shell: |
+    DOCKER_INFO=$(gsutil cat gs://{{ bucket }}/hub.docker.com/docker-config.tsv)
+    DOCKER_USER=$(echo ${DOCKER_INFO} | awk '{print $1}' | tr -cd '[:print:]')
+    DOCKER_PASSWORD=$(echo ${DOCKER_INFO} | awk '{print $2}' | tr -cd '[:print:]')
+    DOCKER_EMAIL=$(echo ${DOCKER_INFO} | awk '{print $3}' | tr -cd '[:print:]')
+    kubectl get secret docker-hub-private-registry --namespace {{namespace}} || \
+    kubectl create secret docker-registry docker-hub-private-registry \
+      --docker-server=https://index.docker.io/v1/ \
+      --docker-username=${DOCKER_USER} \
+      --docker-password=${DOCKER_PASSWORD} \
+      --docker-email=${DOCKER_EMAIL} \
+      --namespace {{ namespace }}
+
+- name: add admin and developer role to namespaces {{ namespace }}
+  shell: |
+    kubectl get role "{{ rbac_namespace }}:admin" --namespace {{ namespace }} || \
+      kubectl create -n {{namespace}} -f "{{ kubernetes.root.path }}/{{ namespace }}/admin-role.yaml"
+    kubectl get role "{{ rbac_namespace }}:developer" --namespace {{ namespace }} || \
+      kubectl create -n {{ namespace }} -f "{{ kubernetes.root.path }}/{{ namespace }}/developer-role.yaml"

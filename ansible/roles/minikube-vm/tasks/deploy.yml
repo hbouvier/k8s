@@ -1,0 +1,41 @@
+---
+# minikubeVM: Running | minikubeVM: Stopped | minikubeVM: Does Not Exist
+# localkube: Running  | localkube: N/A      | localkube: N/A
+- name: minikube virtual machine status
+  shell: >
+    minikube status
+  register: minikube_status
+
+- debug: var=minikube_status.stdout_lines
+
+# tarting local Kubernetes cluster...
+# Starting VM...
+# SSH-ing files into VM...
+# Setting up certs...
+# Starting cluster components...
+# Connecting to cluster...
+# Setting up kubeconfig...
+# Kubectl is now configured to use the cluster.
+- name: Creating minikube virtual machine
+  shell: |
+    minikube start --cpus "{{ minikube_cpus }}" --disk-size "{{ minikube_disk_size }}" --memory "{{ minikube_memory }}"
+    minikube addons enable ingress dashboard kube-dns heapster
+  register: minikube_start_status
+  when: '"minikubeVM: Does Not Exist" in minikube_status.stdout'
+
+- debug: var=minikube_start_status.stdout_lines
+  when: '"minikubeVM: Does Not Exist" in minikube_status.stdout'
+
+- name: Starting minikube virtual machine
+  shell: >
+    minikube start
+  register: minikube_start_status
+  when: '"minikubeVM: Stopped" in minikube_status.stdout'
+
+- debug: var=minikube_start_status.stdout_lines
+  when: '"minikubeVM: Stopped" in minikube_status.stdout'
+
+- name: Minikube virtual machine is already running
+  shell: >
+    echo "minikube is running"
+  when: '"minikubeVM: Running" in minikube_status.stdout'

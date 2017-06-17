@@ -1,0 +1,21 @@
+---
+- name: Google Cloud Account
+  shell: >
+    gcloud info | grep Account | cut -f2 -d\[ | cut -f1 -d\] | tr -cd '[:print:]'
+  register: gcloud_account
+
+- debug: var=gcloud_account.stdout
+
+- name: Google Cloud user name
+  shell: >
+    echo {{ gcloud_account.stdout }} | cut -f1 -d@
+  register: gcloud_username
+
+
+#########
+
+- include: deploy.yml
+  when: mode == "deploy"
+
+- include: clean.yml
+  when: mode == "clean"

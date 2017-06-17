@@ -1,0 +1,9 @@
+# ansible-playbook -i environments/local gke.yml --extra-vars "configuration=${USER} rbac_namespace=acme project_name=${USER}s-sandbox cluster_name=sand-castle zone=us-west1-a"
+- hosts: gke
+  roles:
+    - { role: kubernetes-cli, tags: [kubernetes-cli] }
+    - { role: gke           , tags: [gke]            }
+    - { role: rbac          , tags: [rbac]           }
+    - { role: helm          , tags: [helm]           }
+    - { role: konfd         , tags: [konfd]          }
+    - { role: namespaces    , tags: [namespaces]     }

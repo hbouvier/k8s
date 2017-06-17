@@ -1,0 +1,62 @@
+- name: Google Cloud Configuration
+  shell: >
+    gcloud config configurations activate {{ configuration }} || gcloud config configurations create {{ configuration }}
+
+- name: Google Cloud Account 
+  shell: >
+    gcloud info | grep Account | cut -f2 -d\[ | cut -f1 -d\] | tr -cd '[:print:]'
+  register: gcloud_account
+
+- debug: var=gcloud_account.stdout
+
+- name: Configure gcloud
+  shell: |
+    DEFAILT_ZONE="{{ zone }}"
+    REGION=$(echo ${DEFAILT_ZONE%-?})
+    gcloud config set compute/zone {{ zone }}
+    gcloud config set compute/region ${REGION}
+    gcloud config set account {{ gcloud_account.stdout }}
+    gcloud config set project {{ project_name }}
+    gcloud config set container/cluster {{ cluster_name }}
+
+- name: Google Cloud Project
+  shell: >
+    gcloud config get-value project
+  register: gcloud_project
+
+- name: Google Cloud Cluster Name
+  shell: >
+    gcloud config get-value container/cluster
+  register: gcloud_cluster
+
+- name: Google Cloud default Zone
+  shell: >
+    gcloud config get-value compute/zone
+  register: gcloud_zone
+
+- debug: var=gcloud_project.stdout
+- debug: var=gcloud_cluster.stdout
+- debug: var=gcloud_zone.stdout
+- debug: var=zone
+
+- name: Make sure we are working on the right Project {{ gcloud_project.stdout }} == {{ project_name }}
+  shell: exit -1
+  when: project_name != gcloud_project.stdout
+
+- name: Make sure we are working on the right Zone {{ gcloud_zone.stdout }} == {{ zone }}
+  shell: exit -1
+  when: zone != gcloud_zone.stdout
+
+- name: Obtain GKE cluster credentials
+  shell: >
+    gcloud container clusters get-credentials {{ cluster_name }}
+  ignore_errors: true
+  register: gcloud_credentials
+
+###################
+
+- include: deploy.yml
+  when: mode == "deploy"
+
+- include: clean.yml
+  when: mode == "clean"

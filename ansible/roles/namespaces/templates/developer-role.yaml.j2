@@ -1,0 +1,34 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: {{ rbac_namespace }}:developer
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources:
+  - secrets
+  - configmaps
+  - statefulsets
+  - deployments
+  - jobs
+  - cronjobs
+  - scheduledjobs
+  - events
+  - pods
+  - pods/attach
+  - pods/exec
+  - pods/portforward
+  - pods/proxy
+  - pods/log
+  - pods/status
+  - persistentvolumeclaims
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch

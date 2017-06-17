@@ -1,0 +1,6 @@
+---
+
+- name: Deploy konfd
+  shell: >
+    kubectl delete -n kube-system deploy konfd
+  ignore_errors: true

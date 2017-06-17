@@ -1,0 +1,15 @@
+---
+
+- name: mkdir {{ kubernetes.root.path }}/kube-system
+  file:
+    path: "{{ kubernetes.root.path }}/kube-system/"
+    state: directory
+
+- name: copy konfd-deployment.yml in {{ kubernetes.root.path }}/kube-system/
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/kube-system/"
+
+- name: Deploy konfd
+  shell: >
+    kubectl apply -f "{{ kubernetes.root.path }}/kube-system/konfd-deployment.yml"

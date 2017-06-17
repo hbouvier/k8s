@@ -1,0 +1,7 @@
+---
+
+- name: Promote self to kubernetes cluster admin
+  shell: >
+    kubectl get clusterrolebinding "{{ rbac_namespace }}:{{ gcloud_username.stdout }}-cluster-admin-binding" || \
+    kubectl create clusterrolebinding "{{ rbac_namespace }}:{{ gcloud_username.stdout }}-cluster-admin-binding" \
+            --clusterrole=cluster-admin --user="{{ gcloud_account.stdout }}"

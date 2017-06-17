@@ -1,0 +1,9 @@
+---
+
+- name: Install VirtualBox
+  shell: >
+    which virtualbox || brew cask install virtualbox
+
+- name: Install minikube CLI
+  shell: >
+    which minikube || brew cask install minikube

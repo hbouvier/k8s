@@ -1,0 +1,20 @@
+---
+
+- name: Install helm-cli
+  shell: >
+    which helm || brew install kubernetes-helm
+
+- name: Create helm service account
+  shell: >
+    kubectl -n kube-system get sa tiller || kubectl -n kube-system create sa tiller
+
+- name: Create helm service account binding
+  shell: >
+    kubectl get clusterrolebinding "{{ rbac_namespace }}:tiller" || \
+    kubectl create clusterrolebinding "{{ rbac_namespace }}:tiller" \
+      --clusterrole cluster-admin \
+      --serviceaccount=kube-system:tiller
+
+- name: Initialize helm
+  shell: >
+    helm init --service-account tiller

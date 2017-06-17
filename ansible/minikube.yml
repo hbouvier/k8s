@@ -1,0 +1,12 @@
+# PYTHONPATH=./library/modules ansible-playbook -i environments/local minikube.yml
+- hosts: minikube
+  roles:
+    - { role: kubernetes-cli }
+    - { role: minikube-cli   }
+    - {
+      role: minikube-vm,
+      name: "{{inventory_hostname}}",
+      cpus: "{{inventory_cpus}}",
+      memory: "{{inventory_memory}}",
+      disk_size: "{{inventory_disk_size}}"
+    }

@@ -1,0 +1,12 @@
+---
+
+- name: Delete helm service account
+  shell: >
+    kubectl delete clusterrolebinding "{{ rbac_namespace }}:tiller"
+  ignore_errors: true
+
+- name: delete helm service account binding
+  shell: >
+    kubectl -n kube-system delete sa tiller
+  ignore_errors: true
+

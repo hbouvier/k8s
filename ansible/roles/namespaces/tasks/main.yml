@@ -1,0 +1,8 @@
+---
+- include: deploy.yml
+  with_items: '{{ namespaces }}'
+  when: mode == "deploy"
+
+- include: clean.yml
+  with_items: '{{ namespaces }}'
+  when: mode == "clean"
