@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    job-name: terminal
+  name: terminal
+spec:
+  template:
+    metadata:
+      labels:
+        job-name: terminal
+      name: terminal
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: terminal
+        image: hbouvier/terminal
+        imagePullPolicy: IfNotPresent
+        stdin: true
+        tty: true
+        env:
+        - name: DOCKER_API_VERSION
+          value: "1.23"
+        volumeMounts:
+          - mountPath: /var/run/docker.sock
+            name: dockersock
+      volumes: 
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
