@@ -5,16 +5,32 @@
     which helm || brew install kubernetes-helm
 
 - name: Create helm service account
-  shell: >
-    kubectl -n kube-system get sa tiller || kubectl -n kube-system create sa tiller
+  kubernetes:
+    state:     present
+    name:      tiller
+    resource:  sa
+    namespace: kube-system
 
 - name: Create helm service account binding
-  shell: >
-    kubectl get clusterrolebinding "{{ rbac_namespace }}:tiller" || \
-    kubectl create clusterrolebinding "{{ rbac_namespace }}:tiller" \
+  kubernetes:
+    state:     present
+    name:      "{{ rbac_namespace }}:tiller"
+    resource:  clusterrolebinding
+    options: >
       --clusterrole cluster-admin \
       --serviceaccount=kube-system:tiller
+
+- name: tiler deployment status
+  kubernetes:
+    state:     status
+    name:      tiller-deploy
+    resource:  deployment
+    namespace: kube-system
+  register: tiler_status
+
+- debug: var=tiler_status
 
 - name: Initialize helm
   shell: >
     helm init --service-account tiller
+  when: tiler_status.meta.present == false

@@ -4,19 +4,30 @@
   set_fact:
     namespace: "{{ item }}"
 
-- name: delete admin and developer role from namespaces {{ namespace }}
-  shell: |
-    kubectl delete role "{{ rbac_namespace }}:admin" --namespace {{ namespace }}
-    kubectl delete role "{{ rbac_namespace }}:developer" --namespace {{ namespace }}
-  ignore_errors: true
+- name: delete developer role for namespace {{namespace}}
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:developer"
+    resource:  role
+    namespace: "{{ namespace }}"
+
+- name: delete admin role for namespace {{namespace}}
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:admin"
+    resource:  role
+    namespace: "{{ namespace }}"
 
 
-- name: delete private dockerhub credentials from namespace {{ namespace }}
-  shell: |
-    kubectl delete secret docker-hub-private-registry --namespace {{namespace}}
-  ignore_errors: true
+- name: delete dockerhub credentials for namespace {{ namespace }}
+  kubernetes:
+    state:     absent
+    name:      docker-hub-private-registry
+    resource:  secret
+    namespace: "{{ namespace }}"
 
 - name: delete namespace {{namespace}}
-  shell: |
-    kubectl delete ns {{ namespace }}
-  ignore_errors: true
+  kubernetes:
+    state:     absent
+    name:      "{{ namespace }}"
+    resource:  namespace

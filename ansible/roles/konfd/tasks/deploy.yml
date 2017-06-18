@@ -11,5 +11,12 @@
     dest: "{{ kubernetes.root.path }}/kube-system/"
 
 - name: Deploy konfd
-  shell: >
-    kubectl apply -f "{{ kubernetes.root.path }}/kube-system/konfd-deployment.yml"
+  kubernetes:
+    state:     present
+    name:      konfd
+    resource:  deployment
+    namespace: kube-system
+    manifest:  "{{ kubernetes.root.path }}/kube-system/konfd-deployment.yml"
+  register: konfd_deployment
+
+- debug: var=konfd_deployment.meta.stdout

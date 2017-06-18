@@ -1,5 +1,7 @@
 ---
 
 - name: Demote self to kubernetes cluster admin
-  shell: >
-    kubectl delete clusterrolebinding "{{ rbac_namespace }}:{{ gcloud_username.stdout }}-cluster-admin-binding"
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:{{ gcloud_username.stdout }}-cluster-admin-binding"
+    resource:  clusterrolebinding

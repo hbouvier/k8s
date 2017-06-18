@@ -1,6 +1,12 @@
 ---
 
-- name: Deploy konfd
-  shell: >
-    kubectl delete -n kube-system deploy konfd
-  ignore_errors: true
+
+- name: Delete konfd
+  kubernetes:
+    state:     absent
+    name:      konfd
+    resource:  deployment
+    namespace: kube-system
+  register: konfd_deployment
+
+- debug: var=konfd_deployment
