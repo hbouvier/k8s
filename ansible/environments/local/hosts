@@ -23,6 +23,6 @@ min_nodes=1
 max_nodes=16
 node_pool_name=default-pool
 rbac_namespace=cluster
-namespaces=["frontend","backend"]
+namespaces=["dmz"]
 bucket=acme-bucket
 configuration=default

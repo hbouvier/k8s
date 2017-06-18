@@ -1,0 +1,22 @@
+---
+
+- name: mkdir {{ kubernetes.root.path }}/dmz
+  file:
+    path: "{{ kubernetes.root.path }}/dmz/"
+    state: directory
+
+- name: copy nginx-ingress.values.yml in {{ kubernetes.root.path }}/dmz/
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/dmz/"
+
+- name: Deploy nginx-ingress chart
+  helm:
+    state:     present
+    name:      nginx-ingress
+    chart:     stable/nginx-ingress
+    namespace: dmz
+    manifest:  "{{ kubernetes.root.path }}/dmz/nginx-ingress.values.yml"
+  register: nginx_ingress_chart
+
+- debug: var=nginx_ingress_chart.stdout_lines

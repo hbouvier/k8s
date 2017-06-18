@@ -7,3 +7,4 @@
     - { role: helm          , tags: [helm]           }
     - { role: konfd         , tags: [konfd]          }
     - { role: namespaces    , tags: [namespaces]     }
+    - { role: nginx-ingress , tags: [nginx-ingress]  }

@@ -1,0 +1,14 @@
+controller:
+  stats:
+    # enables http://localhost:18080/nginx_status
+    enabled: true
+  service:
+    annotations:
+      service.beta.kubernetes.io/external-traffic: "OnlyLocal"
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

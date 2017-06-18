@@ -1,0 +1,10 @@
+---
+
+- name: delete nginx-ingress chart
+  helm:
+    state:     absent
+    name:      nginx-ingress
+    options:   --purge
+  register: nginx_ingress_chart
+
+- debug: var=nginx_ingress_chart.stdout_lines
