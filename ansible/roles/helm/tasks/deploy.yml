@@ -33,4 +33,4 @@
 - name: Initialize helm
   shell: >
     helm init --service-account tiller
-  when: tiler_status.meta.present == false
+  when: tiler_status.present == false

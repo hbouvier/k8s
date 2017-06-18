@@ -7,73 +7,69 @@ Example Usage:
 import argparse
 from subprocess import Popen, PIPE
 
-def package_status(module):
-  is_error    = False
-  has_changed = False
-  meta        = {}
-
-  rc, present, meta = which(module)
-  if rc != 0:
-    is_error = True
-    meta['present'] = False
-    module.fail_json(
-      msg='Error: ' + meta['cmd'] + ' rc=' + str(rc) + ' ' + meta['stderr'],
-      cmd=meta['cmd'], out=meta['stdout'], err=meta['stderr'], rc=rc
-    )
+def which(module, result):
+  result = command([ "which", module.params['name'] ], result)
+  if result['rc'] == 0:
+    result['present'] = True
+  elif result['rc'] == 1 and result['failed'] == False:
+    result['rc'] = 0 # not found is not an error
+    result['present'] = False
   else:
-    meta['present'] = present
-  return is_error, has_changed, meta
+    result['failed']  = True
+    result['present'] = False
 
-#############################################################################
+  return result
 
-def which(module):
-  command = ["which", module.params['name']]
-  rc, meta = _exec(command)
-  if rc == 0:
-    return 0, True, meta
-  elif rc == 1: # and (module.params['name'] + ' not found') in meta['stdout']:
-    return 0, False, meta
-  else:
-    return rc, False, meta
-
-def _exec(args):
+def command(args, result):
   args = map(str, args)
-  command = ' '.join(args)
+  result['cmd'] = ' '.join(args)
   try:
     popen = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = popen.communicate()
-    rc = popen.returncode
+    result['stdout'], result['stderr'] = popen.communicate()
+    result['rc'] = popen.returncode
+    result['msg'] = '[' + str(popen.returncode) + '] ' + result['cmd'] + ' => ' + result['stdout']
   except Exception, e:
-    rc = -10000
-    stdout = ''
-    stderr = str(e)
-  msg =  "cmd='" + command + "'"
-  if rc != 0:
-    msg = "ERROR: rc=" + str(rc) + ", " + msg + " =>  " + stderr
-  meta = {
-    "rc" : rc,
-    "cmd" : command,
-    "stdout" : stdout,
-    "stderr" : stderr,
-    "msg" : msg
-  }
-  return rc, meta
+    result['failed'] = True
+    result['rc'] = -32767
+    result['stdout'] = 'n/a'
+    result['stderr'] = str(e)
+    result['msg'] = '[KO] ' + result['cmd'] + ' => ' + result['stderr']
+  result['stdout_lines'] = result['stdout'].splitlines()
+  result['stderr_lines'] = result['stderr'].splitlines()
+  return result
 
 
 ###############################################################################
 
+try:
+  import json
+except ImportError:
+  import simplejson as json
+
+import datetime
+
 def main():
+  result = {
+    "changed": False,
+    "failed":  False,
+    "rc":  0,
+    "start": datetime.datetime.now()
+  }
+
   fields = {
     "name"  : {"required": True,  "type": "str"}
   }
 
   module = AnsibleModule(argument_spec=fields)
-  is_error, has_changed, result = package_status(module)
-
-  if not is_error:
-    module.exit_json(changed=has_changed, meta=result)
+  result = which(module, result)
+  result['end'] = datetime.datetime.now()
+  result['delta'] = str(result['end'] - result['start'])
+  result['start'] = str(result['start'])
+  result['end'] = str(result['end'])
+  if result['failed']:
+    module.fail_json(**result)
   else:
-    module.fail_json(msg="Error WHICH", meta=result)
+    module.exit_json(**result)    
 
 ###############################################################################
 

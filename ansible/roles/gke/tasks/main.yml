@@ -2,9 +2,9 @@
   shell: >
     gcloud config configurations activate {{ configuration }} || gcloud config configurations create {{ configuration }}
 
-- name: Google Cloud Account 
+- name: Google Cloud Account
   shell: >
-    gcloud info | grep Account | cut -f2 -d\[ | cut -f1 -d\] | tr -cd '[:print:]'
+    gcloud info --format='value(config.account)'
   register: gcloud_account
 
 - debug: var=gcloud_account.stdout

@@ -8,7 +8,7 @@
 - name: Install VirtualBox
   shell: >
     brew cask install virtualbox
-  when: virtualbox_package.meta.present == false
+  when: virtualbox_package.present == false
 
 - name: package minikube cli
   which:
@@ -18,4 +18,4 @@
 - name: Install minikube CLI
   shell: >
     brew cask install minikube
-  when: minikube_package.meta.present == false
+  when: minikube_package.present == false

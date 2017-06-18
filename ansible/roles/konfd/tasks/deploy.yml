@@ -19,4 +19,4 @@
     manifest:  "{{ kubernetes.root.path }}/kube-system/konfd-deployment.yml"
   register: konfd_deployment
 
-- debug: var=konfd_deployment.meta.stdout
+- debug: var=konfd_deployment.stdout

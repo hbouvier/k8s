@@ -8,7 +8,7 @@
 - name: uninstall VirtualBox
   shell: >
     brew cask uninstall virtualbox
-  when: virtualbox_package.meta.present == true
+  when: virtualbox_package.present == true
 
 - name: package minikube cli
   which:
@@ -18,4 +18,4 @@
 - name: uninstall minikube CLI
   shell: >
     brew cask uninstall minikube
-  when: minikube_package.meta.present == true
+  when: minikube_package.present == true

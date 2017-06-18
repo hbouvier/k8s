@@ -8,7 +8,8 @@
 - name: package wget
   package:
     name: wget
-  when: gcloud_package.meta.present == false
+  when: gcloud_package.present == false
+
 
 - name: Install Google Cloud CLI tools
   shell: |
@@ -22,10 +23,10 @@
     gcloud init
     gcloud components install alpha --quiet
   register: gcloud_installed
-  when: gcloud_package.meta.present == false
+  when: gcloud_package.present == false
 
 - debug: var=gcloud_installed.stdout_lines
-  when: 'gcloud_package.meta.present == false and "gcloud not found" in gcloud_installed.stdout'
+  when: 'gcloud_package.present == false and "gcloud not found" in gcloud_installed.stdout'
 
 
 - name: package kubectl
@@ -36,7 +37,7 @@
 - name: Install kubectl CLI
   shell: >
     gcloud components install kubectl
-  when: kubectl_package.meta.present == false
+  when: kubectl_package.present == false
 
 - name: package kubectx
   which:
@@ -48,5 +49,5 @@
     brew tap ahmetb/kubectx https://github.com/ahmetb/kubectx.git
     brew install kubectx
   register: kubectx_installed
-  when: kubectx_package.meta.present == false
+  when: kubectx_package.present == false
 

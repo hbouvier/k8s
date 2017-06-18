@@ -10,7 +10,7 @@
 - name: uninstall kubectl CLI
   shell: >
     gcloud components remove kubectl
-  when: kubectl_package.meta.present == true
+  when: kubectl_package.present == true
 
 - name: uninstall package kubectx
   package:
@@ -28,4 +28,4 @@
 #   shell: |
 #     echo "how do we uninstall it?!"
 #   register: gcloud_installed
-#   when: gcloud_package.meta.present == true
+#   when: gcloud_package.present == true
