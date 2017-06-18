@@ -1,8 +1,8 @@
 ---
 
-- name: Install helm-cli
-  shell: >
-    which helm || brew install kubernetes-helm
+- name: helm cli package status
+  package:
+    name: kubernetes-helm
 
 - name: Create helm service account
   kubernetes:

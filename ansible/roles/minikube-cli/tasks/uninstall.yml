@@ -1,0 +1,21 @@
+---
+
+- name: package VirtualBox
+  which:
+    name: virtualbox
+  register: virtualbox_package
+
+- name: uninstall VirtualBox
+  shell: >
+    brew cask uninstall virtualbox
+  when: virtualbox_package.meta.present == true
+
+- name: package minikube cli
+  which:
+    name: virtualbox
+  register: minikube_package
+
+- name: uninstall minikube CLI
+  shell: >
+    brew cask uninstall minikube
+  when: minikube_package.meta.present == true

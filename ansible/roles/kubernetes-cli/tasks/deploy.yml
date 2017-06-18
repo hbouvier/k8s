@@ -1,0 +1,52 @@
+---
+
+- name: package gcloud
+  which:
+    name: gcloud
+  register: gcloud_package
+
+- name: package wget
+  package:
+    name: wget
+  when: gcloud_package.meta.present == false
+
+- name: Install Google Cloud CLI tools
+  shell: |
+    export GSDK_VERSION=158.0.0
+    wget "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GSDK_VERSION}-darwin-x86_64.tar.gz" -P ~/Downloads/
+    cd ${HOME}/Applications/
+    tar xzf "${HOME}/Downloads/google-cloud-sdk-${GSDK_VERSION}-darwin-x86_64.tar.gz" && rm "${HOME}/Downloads/google-cloud-sdk-${GSDK_VERSION}-darwin-x86_64.tar.gz"
+    cd google-cloud-sdk
+    ./install.sh --disable-prompts
+    cd
+    gcloud init
+    gcloud components install alpha --quiet
+  register: gcloud_installed
+  when: gcloud_package.meta.present == false
+
+- debug: var=gcloud_installed.stdout_lines
+  when: 'gcloud_package.meta.present == false and "gcloud not found" in gcloud_installed.stdout'
+
+
+- name: package kubectl
+  which:
+    name: kubectl
+  register: kubectl_package
+
+- name: Install kubectl CLI
+  shell: >
+    gcloud components install kubectl
+  when: kubectl_package.meta.present == false
+
+- name: package kubectx
+  which:
+    name: kubectx
+  register: kubectx_package
+
+- name: Install kubectx CLI
+  shell: |
+    brew tap ahmetb/kubectx https://github.com/ahmetb/kubectx.git
+    brew install kubectx
+  register: kubectx_installed
+  when: kubectx_package.meta.present == false
+

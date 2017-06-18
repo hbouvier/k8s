@@ -1,0 +1,31 @@
+---
+
+- name: package kubectl
+  which:
+    name: kubectl
+  register: kubectl_package
+
+- debug: var=kubectl_package
+
+- name: uninstall kubectl CLI
+  shell: >
+    gcloud components remove kubectl
+  when: kubectl_package.meta.present == true
+
+- name: uninstall package kubectx
+  package:
+    name: kubectx
+    state: absent
+
+- name: package gcloud
+  which:
+    name: gcloud
+  register: gcloud_package
+
+- debug: var=gcloud_package
+
+# - name: Uninstall Google Cloud CLI tools
+#   shell: |
+#     echo "how do we uninstall it?!"
+#   register: gcloud_installed
+#   when: gcloud_package.meta.present == true
