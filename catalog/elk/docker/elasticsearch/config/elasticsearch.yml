@@ -17,6 +17,7 @@ bootstrap:
   memory_lock: true
 
 http:
+  host: ${HTTP_HOST}
   enabled: ${HTTP_ENABLE}
   compression: true
   cors:
