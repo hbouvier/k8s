@@ -4,7 +4,7 @@
 Example Usage:
 """
 
-import argparse
+import argparse, os
 from subprocess import Popen, PIPE
 
 def resource_present(module, result):
@@ -12,6 +12,18 @@ def resource_present(module, result):
   if result['rc'] == 0:
     if not result['present']:
       result = apply_resource(module, result)
+
+  return result
+
+def resource_apply(module, result):
+  if module.params['manifest']:
+    result = apply_resource(module, result)
+  else:
+    result = get_resource(module, result)
+    if result['rc'] == 0:
+      if result['present']:
+        result = delete_resource(module, result)
+    result = apply_resource(module, result)
 
   return result
 
@@ -30,8 +42,12 @@ def get_resource(module, result):
     ns = [ "-n", module.params['namespace'] ]
   else:
     ns = []
+  if module.params['jsonpath']:
+    jsonpath = [ "-o", "jsonpath=" + module.params['jsonpath'] ]
+  else:
+    jsonpath = []
 
-  result = command(["kubectl", "get", module.params['resource'], module.params['name']] + ns, result)
+  result = command(["kubectl", "get", module.params['resource'], module.params['name']] + ns + jsonpath, result)
 
   if result['rc'] == 0:
     result['present'] = True
@@ -65,7 +81,14 @@ def apply_resource(module, result):
 
   result['changed'] = True
   if module.params['manifest']:
-    result = command(["kubectl", "apply", "-f", module.params['manifest']] + ns, result)
+    if module.params['manifest'].startswith('gs://'):
+      filename = "/tmp/ansible.gs." + str(os.getpid()) + ".yaml"
+      result = command(["gsutil", "cp", module.params['manifest'], filename], result)
+      if result['rc'] == 0:
+        result = command(["kubectl", "apply", "-f", filename] + ns, result)
+      command(["rm", filename], {})
+    else:
+      result = command(["kubectl", "apply", "-f", module.params['manifest']] + ns, result)
   else:
     result = command(["kubectl", "create", module.params['resource']] + resource_type + [module.params['name']] + ns + options, result)
   return result
@@ -123,15 +146,17 @@ def main():
     "namespace" : {"required": False, "type": "str"},
     "manifest"  : {"required": False, "type": "str"},
     "options"   : {"required": False, "type": "str"},
+    "jsonpath"  : {"required": False, "type": "str"},
     "state": {
       "default": "present",
-      "choices": ['present', 'absent', 'status'],
+      "choices": ['present', 'absent', 'status', 'apply'],
       "type": 'str'
     }
   }
 
   choice_map = {
     "present": resource_present,
+    "apply"  : resource_apply,
     "absent":  resource_absent,
     "status":  get_resource,
   }
