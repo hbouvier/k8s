@@ -1,4 +1,6 @@
 controller:
+  rbac:
+    serviceAccountName: "ingress"
   stats:
     # enables http://localhost:18080/nginx_status
     enabled: true

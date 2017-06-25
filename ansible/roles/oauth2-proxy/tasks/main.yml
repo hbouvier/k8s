@@ -1,0 +1,8 @@
+---
+- include: deploy.yml
+  with_items: '{{ oauth2_proxies }}'
+  when: mode == "deploy"
+
+- include: clean.yml
+  with_items: '{{ oauth2_proxies }}'
+  when: mode == "clean"

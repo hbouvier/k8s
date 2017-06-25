@@ -1,0 +1,32 @@
+---
+
+- name: delete jenkins chart
+  helm:
+    state:   absent
+    name:    jenkins
+    options: --purge
+  register: jenkins_chart
+
+- debug: var=jenkins_chart.stdout_lines
+
+- name: delete jenkins service account
+  kubernetes:
+    state:     absent
+    name:      jenkins
+    resource:  sa
+    namespace: "{{ jenkins.namespace }}"
+
+
+- name: revoke jenkins service account admin rights to namespace
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:ci:jenkins"
+    resource:  rolebinding
+    namespace: "{{ jenkins.namespace }}" 
+
+- name: revoke cluster-admin role to default service accounts in the jenkins namespace
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:ci:default"
+    resource:  clusterrolebinding
+

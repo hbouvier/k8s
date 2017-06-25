@@ -1,0 +1,75 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: logstash
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  revisionHistoryLimit: 5
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: logstash
+        role: aggregator
+    spec:
+      containers:
+      - name: logstash
+        imagePullPolicy: Always
+        image: hbouvier/logstash-kubernetes:5.4.0
+        ports:
+          - name: syslog
+            containerPort: 5000
+            protocol: UDP
+          - name: syslog-tcp
+            containerPort: 5000
+            protocol: TCP
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          - name: filebeat-raw
+            containerPort: 5043
+            protocol: TCP
+          - name: filebeat-json
+            containerPort: 5044
+            protocol: TCP
+        volumeMounts:
+        - name: config-dir
+          mountPath: /config-dir
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 8080
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 12
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 8080
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        resources:
+          requests:
+            cpu: 150m
+            memory: 512Mi
+          limits:
+            cpu: 150m
+            memory: 512Mi
+      volumes:
+        - name: config-dir
+          configMap:
+            name: logstash
+            items:
+            - key: logstash.conf
+              path: logstash.conf

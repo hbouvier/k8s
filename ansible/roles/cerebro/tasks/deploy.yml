@@ -1,0 +1,25 @@
+---
+
+- name: mkdir {{ kubernetes.root.path }}/{{ namespace }}
+  file:
+    path: "{{ kubernetes.root.path }}/{{ namespace }}/"
+    state: directory
+
+- name: copy {{ resource }} templates for {{ namespace }}
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/{{ namespace }}/"
+
+- name: deploy cerebro {{ resource }} in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "cerebro-{{ resource }}"
+    resource:  "{{ resource }}"
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/cerebro-{{ resource }}.yaml"
+  with_items:
+    - configmap
+    - deployment
+    - service
+  loop_control:
+    loop_var: resource

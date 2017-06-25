@@ -1,0 +1,20 @@
+# Ensures individual StatefulSet get their own DNS entries (e.g. rabbitmq-0.rabbitmq.namespace.svc.cluster.local)
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmqdiscovery
+  labels:
+    app: message-bus
+    component: rabbitmq
+    role: broker
+spec:
+  clusterIP: None
+  ports:
+  - port: 4369
+    name: epmd
+  - port: 25672
+    name: discovery
+  selector:
+    app: message-bus
+    component: rabbitmq
+    role: broker

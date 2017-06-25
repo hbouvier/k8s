@@ -1,0 +1,40 @@
+---
+
+- name: mkdir {{ kubernetes.root.path }}/{{ namespace }}
+  file:
+    path: "{{ kubernetes.root.path }}/{{ namespace }}/"
+    state: directory
+
+- name: copy {{ resource }} templates for {{ namespace }}
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/{{ namespace }}/"
+
+- name: deploy {{ resource }} statefulset in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "es-{{ resource }}"
+    resource:  statefulset
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-statefulset.yaml"
+  with_items:
+    - data
+    - master
+    - client
+  loop_control:
+    loop_var: resource
+  when: elasticsearch.cluster == true
+
+- name: deploy {{ resource }} in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "kibana-{{ resource }}"
+    resource:  "{{ resource }}"
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/kibana-{{ resource }}.yaml"
+  with_items:
+    - deployment
+    - service
+  loop_control:
+    loop_var: resource
+

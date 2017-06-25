@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cerebro
+  labels:
+    app: elk
+    component: cerebro
+    role: management
+spec:
+  selector:
+    app: elk
+    component: cerebro
+    role: management
+  ports:
+  - port: 9000
+    name: http
+    protocol: TCP

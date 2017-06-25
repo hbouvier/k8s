@@ -1,5 +1,14 @@
 ---
 
+- name: delete kube-lego chart
+  helm:
+    state:     absent
+    name:      kube-lego
+    options:   --purge
+  register: kube_lego_chart
+
+- debug: var=kube_lego_chart.stdout_lines
+
 - name: delete nginx-ingress chart
   helm:
     state:     absent
@@ -8,3 +17,17 @@
   register: nginx_ingress_chart
 
 - debug: var=nginx_ingress_chart.stdout_lines
+
+- name: delete ingress service account binding
+  kubernetes:
+    state:     absent
+    name:      "{{ rbac_namespace }}:ingress"
+    resource:  clusterrolebinding
+
+- name: delete ingress service account
+  kubernetes:
+    state:     absent
+    name:      ingress
+    resource:  sa
+    namespace: dmz
+

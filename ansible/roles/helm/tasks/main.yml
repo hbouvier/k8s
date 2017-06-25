@@ -2,6 +2,9 @@
 - include: deploy.yml
   when: mode == "deploy"
 
+- include: upgrade.yml
+  when: mode == "upgrade"
+
 - include: clean.yml
   when: mode == "clean"
 

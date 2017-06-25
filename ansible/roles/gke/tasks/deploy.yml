@@ -10,11 +10,49 @@
           --enable-cloud-monitoring \
           --machine-type {{ machine_type }} \
           --num-nodes {{ min_nodes }} \
+          --cluster-version {{ version }} \
           --quiet
   register: gcloud_cluster_creation
   when: gcloud_credentials.rc != 0
 
 - debug: var=gcloud_cluster_creation
+
+- name: kubernetes api ip address
+  shell: >
+    gcloud container clusters describe sand-castle --format='value(endpoint)'
+  register: kubernetes_api_ip_address
+
+- debug: var=kubernetes_api_ip_address
+
+- name: boto
+  pip:
+    name: boto
+
+# NOTE: Needs in the environment the following AWS API KEY/SECRET
+#       AWS_ACCESS_KEY
+#       AWS_SECRET_KEY
+- name: route53 kubernetes
+  route53:
+    command: create
+    zone: "{{ domain }}"
+    record: "{{ cluster_name }}.{{ domain }}"
+    type: A
+    ttl: 300
+    value: "{{ kubernetes_api_ip_address.stdout }}"
+    wait: yes
+  register: route53_kubernetes
+
+- debug: var=route53_kubernetes
+
+
+
+- name: authenticate GKE cluster {{ cluster_name }} in project {{ project_name }}
+  shell: >
+    gcloud auth login
+  register: gcloud_auth_login
+  when: 'gcloud_credentials.rc != 0 and gcloud_cluster_creation.stderr_lines[0] == "ERROR: (gcloud.container.clusters.create) You do not currently have an active account selected."'
+- debug: var=gcloud_auth_login
+
 
 - name: Show configurations
   shell: >
@@ -23,11 +61,11 @@
 
 - debug: var=configuration_list
 
-- name: Upgrade Kubernetes to version {{ version | default(inventory_version, true) }}
-  shell: |
-    gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --master --quiet
-    gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --node-pool={{ node_pool_name }} --quiet
-  when: gcloud_credentials.rc != 0
+# - name: Upgrade Kubernetes to version {{ version | default(inventory_version, true) }}
+#   shell: |
+#     gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --master --quiet
+#     gcloud container clusters upgrade {{cluster_name}} --cluster-version={{ version }} --node-pool={{ node_pool_name }} --quiet
+#   when: gcloud_credentials.rc != 0
 
 - name: Enable Autoscaling
   shell: >
@@ -45,3 +83,28 @@
     kubectx {{ configuration }}=gke_{{project_name}}_{{ zone }}_{{ cluster_name }}
   register: gcloud_credentials_after_creation
   when: gcloud_credentials.rc != 0
+
+
+
+- name: mkdir {{ kubernetes.root.path }}/gke
+  file:
+    path: "{{ kubernetes.root.path }}/gke/"
+    state: directory
+
+- name: render {{ resource }} storage class for gke
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/gke/"
+
+- name: deploy {{ resource }} storage class in gke
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "{{ resource }}"
+    resource:  storageclass
+    manifest:  "{{ kubernetes.root.path }}/gke/{{ resource }}-storageclass.yaml"
+  with_items:
+    - magnetic-encrypted
+    - ssd-encrypted
+  loop_control:
+    loop_var: resource
+

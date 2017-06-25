@@ -30,7 +30,7 @@
 
 - name: create admin role for namespace {{namespace}}
   kubernetes:
-    state:     present
+    state:     "{{ deploy_state }}"
     name:      "{{ rbac_namespace }}:admin"
     resource:  role
     namespace: "{{ namespace }}"
@@ -38,42 +38,41 @@
 
 - name: create developer role for namespace {{namespace}}
   kubernetes:
-    state:     present
+    state:     "{{ deploy_state }}"
     name:      "{{ rbac_namespace }}:developer"
     resource:  role
     namespace: "{{ namespace }}"
     manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/developer-role.yaml"
 
-- name: dockerhub credentials for namespace {{ namespace }} status
+- name: google service account
   kubernetes:
-    state:     status
+    state:     "{{ deploy_state }}"
+    name:      google-service-account
+    resource:  configmap
+    namespace: "{{ namespace }}"
+    manifest:  "gs://{{ bucket }}/oauth2-proxy/google-service-account.yaml"
+
+- name: google oauth client
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      google-oauth-client
+    resource:  secret
+    namespace: "{{ namespace }}"
+    manifest:  "gs://{{ bucket }}/oauth2-proxy/google-oauth-client.yaml"
+
+- name: delete dockerhub credentials for namespace {{ namespace }}
+  kubernetes:
+    state:     absent
     name:      docker-hub-private-registry
     resource:  secret
-    type:      docker-registry
     namespace: "{{ namespace }}"
-  register: dockerub_secret_status
+  when: 'deploy_state == "apply"'
 
-- name: obtain private dockerhub credentials
-  shell: |
-    gsutil cat gs://{{ bucket }}/hub.docker.com/docker-config.json
-  register: dockerhub_credentials
-  when: dockerub_secret_status.present == false
-
-- name: parse dockerhub credentials
-  set_fact:
-    credentials: "{{ dockerhub_credentials.stdout | from_json }}"
-  when: dockerub_secret_status.present == false
-
-- name: dockerhub credentials for namespace {{ namespace }}
+- name: create dockerhub credentials for namespace {{ namespace }}
   kubernetes:
-    state:     present
+    state:     "{{ deploy_state }}"
     name:      docker-hub-private-registry
     resource:  secret
-    type:      docker-registry
     namespace: "{{ namespace }}"
-    options: >
-      --docker-server={{ credentials.url }} \
-      --docker-username={{ credentials.username }} \
-      --docker-password={{ credentials.password }} \
-      --docker-email={{ credentials.email }}
-  when: dockerub_secret_status.present == false
+    manifest:  "gs://{{ bucket }}/hub.docker.com/docker-hub-private-registry.yaml"
+

@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-system-logs
+  labels:
+    app: elk
+    component: filebeat
+    role: collect-system-logs
+data:
+  filebeat.yml: |-
+    filebeat:  
+      prospectors:
+        -
+          paths:
+            - "/filebeat-logs/root/.*_history"
+            - "/filebeat-logs/home/*/.*_history"
+            - "/var/log/*.log"
+            # - "/var/log/syslog"
+            # - "/var/log/messages"
+            # - "/var/log/debug"
+            # - "/var/log/boot"
+            # - "/var/log/dmesg"
+            # - "/var/log/autologin"
+          input_type: log
+          document_type: logs
+    output:
+      logstash:
+        hosts: ["logstash:5043"]

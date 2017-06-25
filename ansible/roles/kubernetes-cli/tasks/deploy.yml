@@ -18,7 +18,7 @@
     cd ${HOME}/Applications/
     tar xzf "${HOME}/Downloads/google-cloud-sdk-${GSDK_VERSION}-darwin-x86_64.tar.gz" && rm "${HOME}/Downloads/google-cloud-sdk-${GSDK_VERSION}-darwin-x86_64.tar.gz"
     cd google-cloud-sdk
-    ./install.sh --disable-prompts
+    ./install.sh --quiet
     cd
     gcloud init
     gcloud components install alpha --quiet

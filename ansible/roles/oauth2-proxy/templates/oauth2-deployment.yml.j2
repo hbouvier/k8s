@@ -1,0 +1,73 @@
+# proxy.name: kubernetes-dashboard
+# upstream: http://kubernetes-dashboard:80/
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ proxy.name }}-oauth2"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: "{{ proxy.name }}"
+        component: "{{ proxy.name }}-oauth2"
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: a5huynh/oauth2_proxy # https://github.com/bitly/oauth2_proxy
+        args:
+          - "-provider=google"
+          - "-upstream={{ proxy.upstream }}"
+          - "-http-address=0.0.0.0:4180"
+          - "-config=/etc/oauth2_proxy/config/oauth2_proxy.cfg"
+          - "-google-service-account-json=/etc/oauth2_proxy/json/google-service-account.json"
+          - "-google-admin-email=oauth@example.com"
+          - "-google-group=oauth.staging.{{ proxy.name }}@example.com"
+        env:
+          - name: OAUTH2_PROXY_COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: google-oauth-client
+                key: cookie-secret
+          - name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: google-oauth-client
+                key: client-id
+          - name: OAUTH2_PROXY_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: google-oauth-client
+                key: client-secret
+        ports:
+          - name: http
+            containerPort: 4180
+        volumeMounts:
+        - name: oauth2-proxy-config
+          mountPath: /etc/oauth2_proxy/config
+        - name: google-service-account-json
+          mountPath: /etc/oauth2_proxy/json
+        # - name: oauth2-proxy-htpasswd
+        #   mountPath: /etc/oauth2_proxy/passwords
+      volumes:
+      - name: oauth2-proxy-config
+        configMap:
+          name: "{{ proxy.name }}-oauth2"
+          items:
+            - key: oauth2_proxy.cfg
+              path: oauth2_proxy.cfg
+      - name: google-service-account-json
+        configMap:
+          name: google-service-account
+          items:
+            - key: google-service-account.json
+              path: google-service-account.json
+              mode: 0644  
+      # - name: oauth2-proxy-htpasswd
+      #   secret:
+      #     secretName: some-secret
+      #     items:
+      #     - key: htpasswd
+      #       path: .htpasswd
+      #       mode: 0644  

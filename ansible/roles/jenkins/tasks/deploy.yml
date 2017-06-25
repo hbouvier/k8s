@@ -1,0 +1,84 @@
+---
+- name: create jenkins service account
+  kubernetes:
+    state:     present
+    name:      jenkins
+    resource:  sa
+    namespace: "{{ jenkins.namespace }}"
+
+- name: grant jenkins service account admin rights to namespace
+  kubernetes:
+    state:     present
+    name:      "{{ rbac_namespace }}:ci:jenkins"
+    resource:  rolebinding
+    namespace: "{{ jenkins.namespace }}" 
+    options: >
+      --clusterrole cluster-admin \
+      --serviceaccount={{ jenkins.namespace }}:jenkins
+
+# Grant a role to the default service account in namespace
+# because the slaves created by jenkins helm chart use the default
+# service account... only the master uses the 'jenkins' sa. Further more
+# the pipelines uses 'kubectl' which uses the ci:default sa!!!
+- name: grant cluster-admin role to default service accounts in the jenkins namespace
+  kubernetes:
+    state:     present
+    name:      "{{ rbac_namespace }}:ci:default"
+    resource:  clusterrolebinding
+    options: >
+      --clusterrole=cluster-admin
+      --serviceaccount={{ jenkins.namespace }}:default
+#      --group=system:serviceaccounts:{{ jenkins.namespace }} 
+
+
+- name: mkdir {{ kubernetes.root.path }}/{{ jenkins.namespace }}
+  file:
+    path: "{{ kubernetes.root.path }}/{{ jenkins.namespace }}/"
+    state: directory
+
+- name: render {{ item }} templates for namespace {{ jenkins.namespace }}
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubernetes.root.path }}/{{ jenkins.namespace }}/{{ item }}"
+  with_items:
+    - jenkins.pv.yaml
+    - jenkins.pvc.yaml
+    - jenkins.values.yaml
+
+
+- name: persistent volume claim  for namespace {{ jenkins.namespace }}
+  kubernetes:
+    state:     present
+    name:      "{{ cluster_name }}-jenkins-home"
+    resource:  persistentvolumeclaim
+    namespace: "{{ jenkins.namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ jenkins.namespace }}/jenkins.pvc.yaml"
+
+# NOTE: If we create the volume manually, because we want to "restore" from
+#       a snapshot, we could use something like this:
+#
+# - name: persistent volume for namespace {{ jenkins.namespace }}
+#   kubernetes:
+#     state:     present
+#     name:      "{{ cluster_name }}-jenkins-home"
+#     resource:  persistentvolume
+#     namespace: "{{ jenkins.namespace }}"
+#     manifest:  "{{ kubernetes.root.path }}/{{ jenkins.namespace }}/jenkins.pv.yaml"
+
+- name: Deploy jenkins chart
+  helm:
+    state:     present
+    name:      jenkins
+    chart:     stable/jenkins
+    namespace: "{{ jenkins.namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ jenkins.namespace }}/jenkins.values.yaml"
+  register: jenkins_chart
+
+- debug: var=jenkins_chart.stdout_lines
+
+- name: jenkins crendentials
+  shell: >
+    printf $(kubectl get secret --namespace ci jenkins-jenkins -o jsonpath='{.data.jenkins-admin-password}' | base64 --decode)
+  register: jenkins_credentials
+
+- debug: var=jenkins_credentials.stdout

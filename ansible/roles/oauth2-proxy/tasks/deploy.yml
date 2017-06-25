@@ -1,0 +1,39 @@
+---
+
+- name: set proxy to {{ item }}
+  set_fact:
+    proxy: "{{ item }}"
+
+- debug: var=proxy
+
+- name: mkdir {{ kubernetes.root.path }}/{{ proxy.namespace }}
+  file:
+    path: "{{ kubernetes.root.path }}/{{ proxy.namespace }}/"
+    state: directory
+
+- name: render {{ proxy.name }} {{ ressouce }} templates for {{ proxy.namespace }}
+  template:
+    src: "oauth2-{{ ressouce }}.yml.j2"
+    dest: "{{ kubernetes.root.path }}/{{ proxy.namespace }}/{{ proxy.name }}-oauth2-{{ ressouce }}.yml"
+  with_items:
+    - configmap
+    - ingress
+    - deployment
+    - service
+  loop_control:
+    loop_var: ressouce
+
+- name: deploy {{ proxy.name }} {{ ressouce }} in {{ proxy.namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "{{ proxy.name }}-oauth2"
+    resource:  "{{ ressouce }}"
+    namespace: "{{ proxy.namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ proxy.namespace }}/{{ proxy.name }}-oauth2-{{ ressouce }}.yml"
+  with_items:
+    - configmap
+    - ingress
+    - deployment
+    - service
+  loop_control:
+    loop_var: ressouce

@@ -1,0 +1,35 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: "{{ proxy.name }}-oauth2"
+  labels:
+    app: "{{ proxy.name }}"
+    component: "{{ proxy.name }}-oauth2"
+data:
+  oauth2_proxy.cfg: |
+    ## OAuth2 Proxy Config File
+
+    cookie_name = "_oauth2_proxy"
+    cookie_domain = "{{ proxy.name }}.{{ cluster_name }}.{{ domain }}"
+    cookie_expire = "1h"
+    cookie_refresh = "15m"
+    cookie_httponly = true
+
+    cookie_secure = true
+    # cookie_secure = false # REMOVE ME FOR HTTPs
+
+    email_domains = [
+      "example.com"
+    ]
+
+    ## the OAuth Redirect URL.
+    # defaults to the "https://" + requested host header + "/oauth2/callback"
+    # redirect_url = "https://internalapp.yourcompany.com/oauth2/callback"
+
+    ## Authenticated Email Addresses File (one email per line)
+    # authenticated_emails_file = ""
+
+    ## Htpasswd File (optional)
+    ## Additionally authenticate against a htpasswd file. Entries must be created with "htpasswd -s" for SHA encryption
+    ## enabling exposes a username/login signin form
+    # htpasswd_file = "/etc/oauth2_proxy/passwords/.htpasswd"

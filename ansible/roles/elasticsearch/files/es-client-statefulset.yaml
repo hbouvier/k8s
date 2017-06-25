@@ -1,0 +1,136 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: es-client
+spec:
+  serviceName: es-client
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: elasticsearch
+        role: client
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
+    spec:
+      containers:
+      - name: es-client
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - IPC_LOCK
+        image: hbouvier/elasticsearch-kubernetes:5.2.0-001
+        imagePullPolicy: Always
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: "CLUSTER_NAME"
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_MASTER
+          value: "false"
+        - name: NODE_DATA
+          value: "false"
+        - name: HTTP_ENABLE
+          value: "true"
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms1024m -Xmx1024m"
+        - name: HTTP_HOST
+          value: "127.0.0.1"
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        # livenessProbe:
+        #   httpGet:
+        #     path: /_cluster/health
+        #     port: 9200
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 12
+        # readinessProbe:
+        #   httpGet:
+        #     path: /_cluster/health
+        #     port: 9200
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        resources:
+          requests:
+            cpu: 250m
+            memory: 1.5Gi
+          limits:
+            cpu: 250m
+            memory: 1.5Gi
+      - name: nginx
+        imagePullPolicy: Always
+        image: hbouvier/nginx:1.12-alpine-003
+        ports:
+          - name: http
+            containerPort: 80
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx/conf.d
+        - name: nginx-htpasswd
+          mountPath: /etc/nginx/passwords
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 80
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 12
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 80
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        resources:
+          requests:
+            cpu: 10m
+            memory: 20Mi
+          limits:
+            cpu: 10m
+            memory: 20Mi
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: es-nginx
+          items:
+          - key: default.conf
+            path: default.conf
+      - name: nginx-htpasswd
+        secret:
+          secretName: es-users
+          items:
+          - key: htpasswd
+            path: .htpasswd
+            mode: 0644  

@@ -1,5 +1,21 @@
 ---
 
+- name: create ingress service account
+  kubernetes:
+    state:     present
+    name:      ingress
+    resource:  sa
+    namespace: dmz
+
+- name: create ingress service account binding
+  kubernetes:
+    state:     present
+    name:      "{{ rbac_namespace }}:ingress"
+    resource:  clusterrolebinding
+    options: >
+      --clusterrole cluster-admin \
+      --serviceaccount=dmz:ingress
+
 - name: mkdir {{ kubernetes.root.path }}/dmz
   file:
     path: "{{ kubernetes.root.path }}/dmz/"
@@ -20,3 +36,52 @@
   register: nginx_ingress_chart
 
 - debug: var=nginx_ingress_chart.stdout_lines
+
+- name: nginx ingress extrnal load balancer ip address
+  kubernetes:
+    state:     status
+    name:      nginx-ingress-nginx-ingress-controller
+    resource:  svc
+    namespace: dmz
+    jsonpath: '{.status.loadBalancer.ingress[0].ip}'
+  register: ingress_external_ip_address
+  until: 'ingress_external_ip_address.rc == 0 and ingress_external_ip_address.stdout != ""'
+  retries: 60
+  delay: 5
+
+- debug: var=ingress_external_ip_address
+
+- name: boto
+  pip:
+    name: boto
+
+# NOTE: Needs in the environment the following AWS API KEY/SECRET
+#       AWS_ACCESS_KEY
+#       AWS_SECRET_KEY
+- name: route53 ingresses
+  route53:
+    command: create
+    overwrite: true
+    zone: "{{ domain }}"
+    record: "*.{{ cluster_name }}.{{ domain }}"
+    type: A
+    ttl: 300
+    value: "{{ ingress_external_ip_address.stdout }}"
+    wait: yes
+  register: route53_ingresses
+
+- debug: var=route53_ingresses
+
+
+
+
+- name: Deploy kube-lego chart
+  helm:
+    state:     present
+    name:      kube-lego
+    chart:     stable/kube-lego
+    namespace: dmz
+    manifest:  "{{ kubernetes.root.path }}/dmz/kube-lego.values.yml"
+  register: kube_lego_chart
+
+- debug: var=kube_lego_chart.stdout_lines

@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: journald
+spec:
+  template:
+    metadata:
+      name: journald
+      labels:
+        app: elk
+        component: journald
+        role: collect-journald-logs
+    spec:
+      containers:
+      - name: journald
+        imagePullPolicy: Always
+        image: hbouvier/journald:1.0.0
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlogjournal
+          mountPath: /var/log/journal
+          readOnly: true
+        - name: usrbin
+          mountPath: /usr/bin
+          readOnly: true
+
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlogjournal
+        hostPath:
+          path: /var/log/journal
+      - name: usrbin
+        hostPath:
+          path: /usr/bin
+

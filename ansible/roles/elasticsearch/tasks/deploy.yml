@@ -1,0 +1,124 @@
+---
+
+- name: mkdir {{ kubernetes.root.path }}/{{ namespace }}
+  file:
+    path: "{{ kubernetes.root.path }}/{{ namespace }}/"
+    state: directory
+
+- name: render {{ resource }} templates for {{ namespace }}
+  copy: 
+    src: "files/"
+    dest: "{{ kubernetes.root.path }}/{{ namespace }}/"
+
+- name: delete {{ resource }} statefulset in {{ namespace }}
+  kubernetes:
+    state:     absent
+    name:      "es-{{ resource }}"
+    resource:  statefulset
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-statefulset.yaml"
+  with_items:
+    - client
+    - master
+    - data
+  loop_control:
+    loop_var: resource
+  when: 'deploy_state == "apply"'
+
+- name: wait for {{ resource }} statefulset in {{ namespace }} to be absent
+  kubernetes:
+    state:     status
+    name:      "es-{{ resource }}"
+    resource:  statefulset
+    namespace: "{{ namespace }}"
+  with_items:
+    - client
+    - master
+    - data
+  loop_control:
+    loop_var: resource
+  register: statefulset_status
+  when: 'deploy_state == "apply"'
+  until: statefulset_status.present == false
+  retries: 60
+  delay: 5
+
+- name: deploy {{ resource }} statefulset in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "es-{{ resource }}"
+    resource:  statefulset
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-statefulset.yaml"
+  with_items:
+    - data
+    - master
+    - client
+  loop_control:
+    loop_var: resource
+  when: elasticsearch.cluster == true
+
+- name: deploy {{ resource }} statefulset in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "es-{{ resource }}"
+    resource:  statefulset
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-statefulset.yaml"
+  with_items:
+    - elasticsearch
+  loop_control:
+    loop_var: resource
+  when: elasticsearch.cluster == false
+
+
+- name: deploy {{ resource }} service in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "{{ resource }}"
+    resource:  service
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-service.yaml"
+  with_items:
+    - elasticsearch
+    - elasticsearch-discovery
+  loop_control:
+    loop_var: resource
+  when: elasticsearch.cluster == true
+
+- name: deploy {{ resource }} service in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "{{ resource }}"
+    resource:  service
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-service.yaml"
+  with_items:
+    - elasticsearch
+  loop_control:
+    loop_var: resource
+  when: elasticsearch.cluster == false
+
+- name: deploy {{ resource }} sercret in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "es-{{ resource }}"
+    resource:  secret
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-secret.yaml"
+  with_items:
+    - users
+  loop_control:
+    loop_var: resource
+
+- name: deploy {{ resource }} configmap in {{ namespace }}
+  kubernetes:
+    state:     "{{ deploy_state }}"
+    name:      "es-{{ resource }}"
+    resource:  configmap
+    namespace: "{{ namespace }}"
+    manifest:  "{{ kubernetes.root.path }}/{{ namespace }}/es-{{ resource }}-configmap-template.yaml"
+  with_items:
+    - nginx
+  loop_control:
+    loop_var: resource

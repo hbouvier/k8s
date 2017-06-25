@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-container-logs
+  labels:
+    app: elk
+    component: filebeat
+    role: collect-container-logs
+data:
+  filebeat.yml: |-
+    filebeat:  
+      prospectors:
+        -
+          paths:
+            - "/var/log/containers/*.log"
+          input_type: log
+          document_type: kube_logs
+    output:  
+      logstash:
+        hosts: ["logstash:5044"]

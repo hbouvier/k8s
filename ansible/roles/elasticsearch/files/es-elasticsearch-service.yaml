@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    app: elk
+    component: elasticsearch
+    role: client
+spec:
+  selector:
+    app: elk
+    component: elasticsearch
+    role: client
+  ports:
+  - name: http
+    protocol: TCP
+    port: 9200
+    targetPort: 80

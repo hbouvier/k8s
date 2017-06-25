@@ -1,0 +1,20 @@
+---
+
+- name: set proxy to {{ item }}
+  set_fact:
+    proxy: "{{ item }}"
+
+- debug: var=proxy
+
+- name: delete {{ proxy.name }} {{ item }} in {{ proxy.namespace }}
+  kubernetes:
+    state:     absent
+    name:      "{{ proxy.name }}-oauth2"
+    resource:  "{{ item }}"
+    namespace: "{{ proxy.namespace }}"
+  with_items:
+    - configmap
+    - ingress
+    - deployment
+    - service
+

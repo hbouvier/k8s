@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  revisionHistoryLimit: 5
+  template:
+    metadata:
+      labels:
+        app: elk
+        component: kibana
+        role: dashboard
+    spec:
+      containers:
+      - name: kibana
+        imagePullPolicy: IfNotPresent # Always, Never
+        image: kibana:5.2
+        resources:
+          requests:
+            cpu: 50m
+            memory: 512Mi
+          limits:
+            cpu: 50m
+            memory: 512Mi
+        env:
+          - name: ELASTICSEARCH_URL
+            value: "http://elasticsearch:9200"
+        ports:
+          - name: http
+            containerPort: 5601
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 5601
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 5601
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3

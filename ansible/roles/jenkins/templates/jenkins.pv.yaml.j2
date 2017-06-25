@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{ cluster_name }}-jenkins-home"
+spec:
+  capacity:
+    storage: "{{ jenkins.master.storage }}"
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  gcePersistentDisk:
+    fsType: "ext4"
+    pdName: "{{ cluster_name }}-jenkins-home"

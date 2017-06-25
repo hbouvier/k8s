@@ -1,0 +1,4 @@
+- name: upgrade helm (tiler)
+  shell: >
+    helm init --service-account tiller --upgrade
+

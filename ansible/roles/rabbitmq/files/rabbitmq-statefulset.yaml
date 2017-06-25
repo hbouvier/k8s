@@ -1,0 +1,91 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+spec:
+  serviceName: rabbitmqdiscovery
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+      labels:
+        app: message-bus
+        component: rabbitmq
+        role: broker
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: rabbitmq
+        image: hbouvier/rabbitmq-kubernetes:3.6.9-management
+        imagePullPolicy: Always
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: username
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: password
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: cookie
+        ports:
+        - containerPort: 5672
+          name: data
+        - containerPort: 4369
+          name: epmd
+        - containerPort: 15672
+          name: http
+        - containerPort: 25672
+          name: discovery
+        # readinessProbe:
+        #   failureThreshold: 30
+        #   tcpSocket:
+        #     port: 5672
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   successThreshold: 1
+        #   timeoutSeconds: 1
+        # livenessProbe:
+        #   failureThreshold: 3
+        #   tcpSocket:
+        #     port: 5672
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   successThreshold: 1
+        #   timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 100m
+            memory: 512Mi
+
+        volumeMounts:
+        - mountPath: /var/lib/rabbitmq
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+        volume.beta.kubernetes.io/storage-class: magnetic-encrypted
+        volume.alpha.kubernetes.io/storage-class: magnetic-encrypted
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 16Gi
