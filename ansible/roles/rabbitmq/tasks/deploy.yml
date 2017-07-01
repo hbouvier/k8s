@@ -37,6 +37,7 @@
   with_items:
     - statefulset
     - service
+    - ingress
   loop_control:
     loop_var: resource
 
@@ -51,3 +52,47 @@
     - service
   loop_control:
     loop_var: resource
+
+- name: proxy rabbitmq
+  shell: >
+    kubectl port-forward rabbitmq-0 -n {{ namespace }} 15672 &
+  register: port_forward
+
+- name: proxy pid
+  shell: "echo {{ port_forward.stderr }} | awk '{print $2}'"
+  register: proxy_pid
+
+- debug: var=proxy_pid.stdout
+
+- name: wait until the rabbitmq is up and running
+  wait_for:
+    delay: 2
+    host: 127.0.0.1
+    port: 15672
+    timeout: 60
+
+- name: create user
+  uri:
+    url: "http://{{ cluster_admin }}:{{ cluster_password }}127.0.0.115672//api/users/{{ user.name }}/"
+    method: PUT
+    body: >
+        '{"password":"{{ user.password }}", "tags":"administrator,management"}'
+    body_format: json
+    status_code: 200
+  with:
+    - {"name":"bob", "password":"secret"}
+
+- name: create user
+  uri:
+    url: "http://{{ cluster_admin }}:{{ cluster_password }}127.0.0.115672//api/users/{{ username }}/"
+    method: PUT
+    body: >
+        '{"password":"{{ password }}", "tags":"administrator,management"}'
+    body_format: json
+    status_code: 200
+
+
+- name: terminate proxy
+  shell: "kill {{ proxy_pid.stdout }}"
+  register: terminte_proxy
+- debug: var=terminte_proxy
