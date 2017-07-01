@@ -1,10 +1,15 @@
-all: clean build push
+BASE_REPO:=klaemo/couchdb
+BASE_VERSION:=2.0.0
+VERSION:=2.0.0
+NOW:=`date +%Y%m%d`
+
+all: build
 
 clean:
 	@echo ""
 
 build:
-	docker build -t hbouvier/couchdb:2.0.0 .
-
-push:
-	docker push hbouvier/couchdb:2.0.0
+	docker pull ${BASE_REPO}:${BASE_VERSION}
+	docker tag ${BASE_REPO}:${BASE_VERSION} hbouvier/couchdb:${VERSION}-${NOW}
+	echo ${VERSION}-${NOW} > couchdb-from-version.txt
+	docker push hbouvier/couchdb:${VERSION}-${NOW}

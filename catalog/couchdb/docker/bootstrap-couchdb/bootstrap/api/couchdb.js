@@ -15,7 +15,7 @@ exports.cluster = function(config, state) {
 
     return new Promise( (resolve, reject) => {
       function _wait_for_couchdb_to_be_up() {
-        _is_couchdb_up(host)
+        _is_couchdb_up(host, auth)
           .then(body   => json(body))
           .then(res => {
             /* DEBUG */ console.log(`${host} - [  ] couchdb ==> ${JSON.stringify(res)}`);
@@ -37,7 +37,10 @@ exports.cluster = function(config, state) {
     return proxy.put(
       `http://${host}:5984/_node/${cluster_name}@${host}/_config/admins/${config.couchdb.username}`,
       `"${config.couchdb.password}"`,
-      {'Content-Type': 'plain/text; charset=UTF-8'},
+      Object.assign({},
+        auth,
+        {'Content-Type': 'plain/text; charset=UTF-8'},
+      ),
       config.debug
     )
     .then(body => json(body))

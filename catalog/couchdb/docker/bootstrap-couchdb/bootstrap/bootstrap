@@ -7,10 +7,10 @@ const mirv   = require('mirv'),
 
 // We require nodeJS v7.2 as a minimum requirement for ES6.
 //
-mirv.semver.engine_satisfies('7.2');
+mirv.semver.engine_satisfies('8.1');
 
 
-const do_not_log_routes = process.env['NODE_ENV'] == 'production' ? ['/healthz'] : [];
+const do_not_log_routes = process.env['NODE_ENV'] == 'production' ? ['/healthz','/_up'] : [];
 const config = Object.assign({},
                 {
                   nb_workers: 1,

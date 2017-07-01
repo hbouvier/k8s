@@ -1,17 +1,22 @@
-FROM ubuntu:trusty
+FROM node:8-alpine
 
-RUN apt-get -y update && \
-    apt-get -y install curl && \
-    apt-get -y clean
+# ADD https://github.com/hbouvier/watchgod/releases/download/v1.0.2/watchgod_v1.0.2.zip /tmp/
+# 
+# RUN apt-get -y update && \
+#     apt-get -y install curl unzip && \
+#     apt-get -y clean && \
+#     cd /tmp && \
+#     unzip watchgod_v1.0.2.zip && \
+#     mv bin/linux_amd64/watchgod /bin/ && \
+#     rm -rf bin watchgod_v1.0.2.zip && \
+#     echo '{"Processes":[{"Name" : "bootstrap","Command" : ["node", "./bootstrap"]}]}' > /etc/watchgod.json
 
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash && \
-    . /root/.bashrc && \
-    nvm install v7.2.0
+COPY ./bootstrap /app
 
-COPY ./bootstrap /app/bootstrap
-WORKDIR /app/bootstrap
-RUN . /root/.bashrc && \
-    npm install
+WORKDIR /app
 
-CMD . /root/.bashrc && \
-    node ./bootstrap
+RUN npm install
+
+# CMD watchgod -config /etc/watchgod.json boot
+
+CMD node bootstrap

@@ -26,12 +26,9 @@ data:
     [couchdb]
     uuid = couchdb-prod
 
-    [vhosts]
-    /api/v1/proxy/namespaces/database/services/couchdb:5984/ = /
-
     # # Admin user is configured using the Bootstrap Companion app
-    # [admins]
-    # admin = change-me
+    [admins]
+    admin = secret
 
     [log]
     level = info
@@ -77,6 +74,7 @@ data:
     w=2
 
     [chttpd]
+    require_valid_user = true
     # [default.ini] backlog = 512
     backlog = 8192
     # [default.ini] socket_options = [{recbuf, 262144}, {sndbuf, 262144}, {nodelay, true}]
