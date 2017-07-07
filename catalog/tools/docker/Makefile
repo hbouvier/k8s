@@ -1,7 +1,9 @@
+OS=alpine
+
 all: build push
 
 build:
-	docker build -t hbouvier/terminal .
+	docker build -t hbouvier/terminal -f Dockerfile.${OS} .
 
 push:
 	docker push hbouvier/terminal
